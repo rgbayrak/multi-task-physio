@@ -9,7 +9,7 @@ import matplotlib.ticker as plticker
 warnings.filterwarnings("ignore")
 
 # folds together
-net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/miccai-models/out/rresults/'
+net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/transformer/out/results/'
 results_dir = os.listdir(net_dir)
 all_results = sorted(results_dir, reverse=False)
 
@@ -104,18 +104,18 @@ plt.rc('ytick', labelsize=MEDIUM_SIZE, color='black')    # fontsize of the tick 
 #
 # handles, labels = ax1.get_legend_handles_labels()
 # #
-ax = sn.lineplot(x='Lambda RV', y='Pearson Correlation', data=df, style='Model Architectures', hue='Physio Type', estimator=np.median, markers=True, ci='sd')
-handles, labels = ax.get_legend_handles_labels()
-#
-# ax2 = sn.violinplot(x='Lambda RV', y='Pearson Correlation', data=df, split=False, hue='Physio Type',
-#                     scale="count")
+# ax = sn.lineplot(x='Lambda RV', y='Pearson Correlation', data=df, style='Model Architectures', hue='Physio Type', estimator=np.median, markers=True, ci='sd')
+# handles, labels = ax.get_legend_handles_labels()
+
+ax2 = sn.violinplot(x='Lambda RV', y='Pearson Correlation', data=df, split=False, hue='Physio Type',
+                    scale="count")
 #
 # handles, labels = ax2.get_legend_handles_labels()
 
 # ['dodgerblue', 'palevioletred', 'mediumseagreen', 'gold', 'slateblue']
 
 # ax.grid(color='gray', linestyle='-', linewidth=.8)
-plt.legend(loc='lower left', ncol=5, handles=handles, bbox_to_anchor=(0.0, 1.00))
+# plt.legend(loc='lower left', ncol=5, handles=handles, bbox_to_anchor=(0.0, 1.00))
 # ax.set_title('RV')
 
 # loc = plticker.MultipleLocator(base=0.1) # this locator puts ticks at regular intervals

@@ -24,8 +24,10 @@ def train(model, device, train_loader, optim, opt):
         input, target_rv, target_hr = input.to(device), target_rv.to(device), target_hr.to(device)
         optim.zero_grad()
         output_rv, output_hr = model(input)
-        loss_rv = pearsonr(output_rv, target_rv)
-        loss_hr = pearsonr(output_hr, target_hr)
+        # print('{}: {}'.format('pred', output_rv.shape))
+        # print('{}: {}'.format('target', target_rv.shape))
+        loss_rv = pearsonr(output_rv.squeeze(), target_rv.squeeze())
+        loss_hr = pearsonr(output_hr.squeeze(), target_hr.squeeze())
         loss = opt.l1 * loss_rv + opt.l2 * loss_hr
 
 

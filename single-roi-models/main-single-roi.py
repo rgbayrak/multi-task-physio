@@ -3,7 +3,7 @@ import torchvision.transforms as transforms
 import argparse
 from torch.utils.data import DataLoader
 # from data_loader import *
-from data_loader import *
+from single_data_loader import *
 from trainer import *
 from model import *
 from tqdm import tqdm
@@ -33,7 +33,8 @@ def train_model(opt):
     keys = list(train_data.keys())
 
     # calculate number of rois which becomes the channel
-    chs = get_roi_len(opt.roi_list)
+    # chs = get_roi_len(opt.roi_list)
+    chs = 1
 
     # assign random validation remove them from train data
     val_split = round(len(train_data) * opt.val_split)
@@ -45,10 +46,10 @@ def train_model(opt):
         del keys[idx]
 
     # load the train/val data as tensor
-    train_set = data_to_tensor(train_data, opt.roi_list)
+    train_set = data_to_tensor(train_data, opt.roi_list, opt.roi)
     train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=opt.train_batch, shuffle=True, **kwargs)
 
-    val_set = data_to_tensor(val_data, opt.roi_list)
+    val_set = data_to_tensor(val_data, opt.roi_list, opt.roi)
     val_loader = torch.utils.data.DataLoader(dataset=val_set, batch_size=1, shuffle=True, **kwargs)
 
     # load network
@@ -110,8 +111,6 @@ def train_model(opt):
             # plt.legend(['Prediction', 'Target'])
             # plt.show()
 
-
-
             with open(train_loss_file, "a") as file:
                 file.write(str(avg_loss_hr))
                 file.write('\n')
@@ -154,13 +153,14 @@ def test_model(opt):
     # create fold specific dictionaries
     test_data = get_dictionary(opt.test_fold)
     # get number of  total channels
-    chs = get_roi_len(opt.roi_list)
+    # chs = get_roi_len(opt.roi_list)
+    chs = 1
 
     # device CPU or GPU
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     kwargs = {'pin_memory': True} if torch.cuda.is_available() else {}
 
-    test_set = data_to_tensor(test_data, opt.roi_list)
+    test_set = data_to_tensor(test_data, opt.roi_list, opt.roi)
     test_loader = torch.utils.data.DataLoader(dataset=test_set, batch_size=1, **kwargs)
     # print('hi!')
 
@@ -211,14 +211,14 @@ def test_model(opt):
     # plt.show()
 
     # Save statistics
-    prediction_file = '{}rresults/{}/test/{}/pred_scans.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
+    prediction_file = '{}results/{}/test/{}/pred_scans.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
     fold_file = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/k_fold_files/' + opt.test_fold
     # fold_file = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/social_files/' + opt.test_fold
 
-    rvp = '{}/rresults/{}/test/{}/rv_pred.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
-    rvt = '{}/rresults/{}/test/{}/rv_target.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
-    hrp = '{}/rresults/{}/test/{}/hr_pred.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
-    hrt = '{}/rresults/{}/test/{}/hr_target.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
+    rvp = '{}/results/{}/test/{}/rv_pred.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
+    rvt = '{}/results/{}/test/{}/rv_target.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
+    hrp = '{}/results/{}/test/{}/hr_pred.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
+    hrt = '{}/results/{}/test/{}/hr_target.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
 
     os.makedirs(rvp.rstrip('rv_pred.csv'))
 
@@ -264,19 +264,20 @@ def main():
     # pass in command line arguments
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--model', type=str, default='Att')
+    parser.add_argument('--model', type=str, default='Bi-LSTM')
     parser.add_argument('--multi', type=str, default='both')
-    parser.add_argument('--uni_id', type=str, default='Att_findlab90fwm_lr_0.001_l1_0.5')
-    parser.add_argument('--epoch', type=int, default=11, help='number of epochs to train for, default=10')
+    parser.add_argument('--uni_id', type=str, default='Bi-LSTM_schaefertian_roi_0_lr_0.001_l1_0.5')
+    parser.add_argument('--epoch', type=int, default=20, help='number of epochs to train for, default=10')
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate, default=0.0001')
     parser.add_argument('--l1', type=float, default=0.5, help='loss weighting for , default=0.0001')
     parser.add_argument('--l2', type=float, default=0.5, help='learning rate, default=0.0001')
-    parser.add_argument('--test_fold', default='test_fold_4.txt', help='test_fold_k')
-    parser.add_argument('--train_fold', default='train_fold_4.txt', help='train_fold_k')
+    parser.add_argument('--test_fold', default='test_fold_0.txt', help='test_fold_k')
+    parser.add_argument('--train_fold', default='train_fold_0.txt', help='train_fold_k')
     parser.add_argument('--val_split', type=float, default=0.15, help='percentage of the split')
 
-    parser.add_argument('--out_dir', type=str, default='/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/out/', help='Path to output directory')
-    parser.add_argument('--roi_list', type=str, default=['findlab90', 'fwm'], help='list of rois wanted to be included')
+    parser.add_argument('--out_dir', type=str, default='/home/bayrakrg/neurdy/pycharm/multi-task-physio/single-roi-models/out/', help='Path to output directory')
+    parser.add_argument('--roi_list', type=str, default=['tractseg', 'aan'], help='list of rois wanted to be included')
+    parser.add_argument('--roi', type=int, default=1, help='the roi label')
     parser.add_argument('--mode', type=str, default='train', help='Determines whether to backpropagate or not')
     parser.add_argument('--train_batch', type=int, default=16, help='Decides size of each training batch')
     parser.add_argument('--test_batch', type=int, default=1, help='Decides size of each val batch')

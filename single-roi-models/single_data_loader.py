@@ -32,7 +32,8 @@ def get_sub(path):
 
     for subline in sublines:
         gm_fold.append(subline)
-        ngm_fold.append(subline.replace('rois', 'rois_fwm'))
+        ngm_fold.append(subline)
+        # ngm_fold.append(subline.replace('rois', 'rois_fwm'))
         hr_fold.append(subline.replace('.mat', '_hr_filt_ds.mat').replace('rois_', ''))
         rv_fold.append(subline.replace('.mat', '_rv_filt_ds.mat').replace('rois_', ''))
     fp.close()
@@ -61,20 +62,21 @@ def get_dictionary(fold):
         subject_id = subdir_parts[1]
         # print("{}".format(subject_id))
 
-        clust_list = os.listdir(roi_path)
+        # clust_list = os.listdir(roi_path)
+        clust_list = ['tractseg', 'aan']
         if subject_id not in data:
-            data[subject_id] = {clust_list[0]: [roi_path + clust_list[0] + '/' + ngm_fold[i].rstrip('\n')],
+            data[subject_id] = {clust_list[0]: [roi_path + clust_list[0] + '/' + d.rstrip('\n')],
                                 clust_list[1]: [roi_path + clust_list[1] + '/' + d.rstrip('\n')],
                                 'HR_filt_ds': [hr_path + hr_fold[i].rstrip('\n')],
                                 'RV_filt_ds': [rv_path + rv_fold[i].rstrip('\n')]}
         else:
             if clust_list[0] and clust_list[1] not in data[subject_id]:
-                data[subject_id][clust_list[0]] = [roi_path + clust_list[0] + '/' + ngm_fold[i].rstrip('\n')]
+                data[subject_id][clust_list[0]] = [roi_path + clust_list[0] + '/' + d.rstrip('\n')]
                 data[subject_id][clust_list[1]] = [roi_path + clust_list[1] + '/' + d.rstrip('\n')]
                 data[subject_id]['HR_filt_ds'] = [hr_path + hr_fold[i].rstrip('\n')]
                 data[subject_id]['RV_filt_ds'] = [rv_path + rv_fold[i].rstrip('\n')]
             else:
-                data[subject_id][clust_list[0]].append(roi_path + clust_list[0] + '/' + ngm_fold[i].rstrip('\n'))
+                data[subject_id][clust_list[0]].append(roi_path + clust_list[0] + '/' + d.rstrip('\n'))
                 data[subject_id][clust_list[1]].append(roi_path + clust_list[1] + '/' + d.rstrip('\n'))
                 data[subject_id]['HR_filt_ds'].append(hr_path + hr_fold[i].rstrip('\n'))
                 data[subject_id]['RV_filt_ds'].append(rv_path + rv_fold[i].rstrip('\n'))
@@ -82,14 +84,14 @@ def get_dictionary(fold):
     # get the paths
     subj_excl = []
     for subj in data:
-        paths = data[subj]['findlab90']
+        paths = data[subj]['tractseg']
         # keep tract of the subjects that do not have all 4 scans
         if len(paths) == 4:
             subj_excl.append(subj)
 
         scan_order = []
         for path in paths:
-            scan_order.append(path.lstrip('/bigdata/HCP_1200/power+xifra/resting_min+prepro/findlab90/bpf-ds-mat/rois_').rstrip('.mat'))
+            scan_order.append(path.lstrip('/bigdata/HCP_1200/power+xifra/resting_min+prepro/tractseg/bpf-ds-mat/rois_').rstrip('.mat'))
 
         for k in data[subj]:
             new_paths = []
@@ -107,7 +109,7 @@ def get_dictionary(fold):
 class data_to_tensor():
     """ From pytorch example"""
 
-    def __init__(self, data, roi_list, transform=None):
+    def __init__(self, data, roi_list, roi, transform=None):
         # go through all the data and load them in
         # start with one worker
         # as soon as I pass to the data loader it is gonna create a copy depending on the workers (threads)
@@ -130,6 +132,7 @@ class data_to_tensor():
         self.keys = list(self.data.keys())  # so, we just do it once
         self.transform = transform
         self.roi_list = roi_list
+        self.roi = roi
 
     def __len__(self):
         return len(self.idx_list)
@@ -166,7 +169,8 @@ class data_to_tensor():
         # swap axis because
         # numpy: W x C
         # torch: C X W
-        roi_norm = roi_norm.transpose((1, 0))
+        roi_norm = roi_norm.transpose((1, 0))[self.roi]
+        roi_norm = np.expand_dims(roi_norm, axis=0) # because single roi
         hr_norm = hr_norm.squeeze()
         rv_norm = rv_norm.squeeze()
 
