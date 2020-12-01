@@ -25,18 +25,16 @@ def get_roi_len(dirs):
 def get_sub(path):
     fp = open(path, 'r')
     sublines = fp.readlines()
-    gm_fold = []
+    roi_fold = []
     hr_fold = []
     rv_fold = []
-    ngm_fold = []
 
     for subline in sublines:
-        gm_fold.append(subline)
-        ngm_fold.append(subline.replace('rois', 'rois_fwm'))
+        roi_fold.append(subline)
         hr_fold.append(subline.replace('.mat', '_hr_filt_ds.mat').replace('rois_', ''))
         rv_fold.append(subline.replace('.mat', '_rv_filt_ds.mat').replace('rois_', ''))
     fp.close()
-    return gm_fold, hr_fold, rv_fold, ngm_fold
+    return roi_fold, hr_fold, rv_fold
 
 
 def get_dictionary(fold):
@@ -44,7 +42,7 @@ def get_dictionary(fold):
     hr_path = "/data/HR_filt_ds/"
     rv_path = "/data/RV_filt_ds/"
     fold_path = os.path.join("/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/k_fold_files/", fold)
-    gm_fold, hr_fold, rv_fold, ngm_fold = get_sub(fold_path)
+    roi_fold, hr_fold, rv_fold = get_sub(fold_path)
 
     # # LOOK AT YOUR DATA
     # x = os.path.join(rv_path, 'RV_filtds_983773_3T_rfMRI_REST1_RL.mat')
@@ -56,40 +54,46 @@ def get_dictionary(fold):
     # type(rv['tax']), rv['tax'].shape
 
     data = {}
-    for i, d in enumerate(gm_fold):
-        subdir_parts = gm_fold[i].rstrip(".mat").split('_')
+    for i, d in enumerate(roi_fold):
+        subdir_parts = roi_fold[i].rstrip(".mat").split('_')
         subject_id = subdir_parts[1]
         # print("{}".format(subject_id))
 
-        clust_list = os.listdir(roi_path)
+        clust_list = ['schaefer', 'tractseg', 'tian', 'aan']
         if subject_id not in data:
-            data[subject_id] = {clust_list[0]: [roi_path + clust_list[0] + '/' + ngm_fold[i].rstrip('\n')],
+            data[subject_id] = {clust_list[0]: [roi_path + clust_list[0] + '/' + d.rstrip('\n')],
                                 clust_list[1]: [roi_path + clust_list[1] + '/' + d.rstrip('\n')],
+                                clust_list[2]: [roi_path + clust_list[2] + '/' + d.rstrip('\n')],
+                                clust_list[3]: [roi_path + clust_list[3] + '/' + d.rstrip('\n')],
                                 'HR_filt_ds': [hr_path + hr_fold[i].rstrip('\n')],
                                 'RV_filt_ds': [rv_path + rv_fold[i].rstrip('\n')]}
         else:
-            if clust_list[0] and clust_list[1] not in data[subject_id]:
-                data[subject_id][clust_list[0]] = [roi_path + clust_list[0] + '/' + ngm_fold[i].rstrip('\n')]
+            if clust_list[0] and clust_list[1] and clust_list[2] and clust_list[3] not in data[subject_id]:
+                data[subject_id][clust_list[0]] = [roi_path + clust_list[0] + '/' + d.rstrip('\n')]
                 data[subject_id][clust_list[1]] = [roi_path + clust_list[1] + '/' + d.rstrip('\n')]
+                data[subject_id][clust_list[2]] = [roi_path + clust_list[2] + '/' + d.rstrip('\n')]
+                data[subject_id][clust_list[3]] = [roi_path + clust_list[3] + '/' + d.rstrip('\n')]
                 data[subject_id]['HR_filt_ds'] = [hr_path + hr_fold[i].rstrip('\n')]
                 data[subject_id]['RV_filt_ds'] = [rv_path + rv_fold[i].rstrip('\n')]
             else:
-                data[subject_id][clust_list[0]].append(roi_path + clust_list[0] + '/' + ngm_fold[i].rstrip('\n'))
+                data[subject_id][clust_list[0]].append(roi_path + clust_list[0] + '/' + d.rstrip('\n'))
                 data[subject_id][clust_list[1]].append(roi_path + clust_list[1] + '/' + d.rstrip('\n'))
+                data[subject_id][clust_list[2]].append(roi_path + clust_list[2] + '/' + d.rstrip('\n'))
+                data[subject_id][clust_list[3]].append(roi_path + clust_list[3] + '/' + d.rstrip('\n'))
                 data[subject_id]['HR_filt_ds'].append(hr_path + hr_fold[i].rstrip('\n'))
                 data[subject_id]['RV_filt_ds'].append(rv_path + rv_fold[i].rstrip('\n'))
 
     # get the paths
     subj_excl = []
     for subj in data:
-        paths = data[subj]['findlab90']
+        paths = data[subj]['schaefer']
         # keep tract of the subjects that do not have all 4 scans
         if len(paths) == 4:
             subj_excl.append(subj)
 
         scan_order = []
         for path in paths:
-            scan_order.append(path.lstrip('/bigdata/HCP_1200/power+xifra/resting_min+prepro/findlab90/bpf-ds-mat/rois_').rstrip('.mat'))
+            scan_order.append(path.lstrip('/bigdata/HCP_1200/power+xifra/resting_min+prepro/schaefer/bpf-ds-mat/rois_').rstrip('.mat'))
 
         for k in data[subj]:
             new_paths = []
@@ -139,8 +143,10 @@ class data_to_tensor():
         single = self.data[self.idx_list[idx][0]]  # passing the subject string to get the other dictionary
         single_paths = self.paths[self.idx_list[idx][0]]
         hr_path = single_paths['HR_filt_ds'][self.idx_list[idx][1]]
-        gm = single[self.roi_list[0]][self.idx_list[idx][1]]['roi_dat'][0:600, :]
-        ngm = single[self.roi_list[1]][self.idx_list[idx][1]]['roi_dat'][0:600, :]
+        schaefer = single[self.roi_list[0]][self.idx_list[idx][1]]['roi_dat'][0:600, :]
+        tractseg = single[self.roi_list[1]][self.idx_list[idx][1]]['roi_dat'][0:600, :]
+        tian = single[self.roi_list[2]][self.idx_list[idx][1]]['roi_dat'][0:600, :]
+        aan = single[self.roi_list[3]][self.idx_list[idx][1]]['roi_dat'][0:600, :]
         hr = single['HR_filt_ds'][self.idx_list[idx][1]]['hr_filt_ds'][0:600, :]  # trimmed
         rv = single['RV_filt_ds'][self.idx_list[idx][1]]['rv_filt_ds'][0:600, :]  # trimmed
 
@@ -148,9 +154,11 @@ class data_to_tensor():
 
         hr_norm = (hr - hr.mean(axis=0)) / hr.std(axis=0)  # z-score normalization
         rv_norm = (rv - rv.mean(axis=0)) / rv.std(axis=0)  # z-score normalization
-        gm_norm = (gm - gm.mean(axis=0)) / gm.std(axis=0)  # z-score normalization
-        ngm_norm = (ngm - ngm.mean(axis=0)) / ngm.std(axis=0)  # z-score normalization
-        roi_norm = np.hstack((gm_norm, ngm_norm))
+        schaefer_norm = (schaefer - schaefer.mean(axis=0)) / schaefer.std(axis=0)  # z-score normalization
+        tractseg_norm = (tractseg - tractseg.mean(axis=0)) / tractseg.std(axis=0)  # z-score normalization
+        tian_norm = (tian - tian.mean(axis=0)) / tian.std(axis=0)  # z-score normalization
+        aan_norm = (aan - aan.mean(axis=0)) / aan.std(axis=0)  # z-score normalization
+        roi_norm = np.hstack((schaefer_norm, tractseg_norm, tian_norm, aan_norm))
 
         # plt.subplot(311)
         # plt.plot(gm_norm[:, 5], 'g')

@@ -185,8 +185,8 @@ class data_to_tensor():
         # numpy: W x C
         # torch: C X W
         # roi_norm = roi_norm.transpose((1, 0))
-        hr_norm = hr_norm.squeeze()
-        rv_norm = rv_norm.squeeze()
+        hr_norm = hr.squeeze()
+        rv_norm = rv.squeeze()
 
         sample = {'roi': roi_norm, 'hr': hr_norm, 'rv': rv_norm}
 

@@ -1,20 +1,20 @@
 import os
 
-fname = 'bilstm.sh'
+fname = 'transformer.sh'
 activate = 'source /home/bayrakrg/Tools/VENV/python37/bin/activate'
 k_fold_path = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/k_fold_files/'
-out_path = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/miccai_models/out/'
-log_path = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/miccai_models/logs'
+out_path = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/transformer/out/'
+log_path = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/transformer/logs'
 top = '#!/bin/bash'
-line = 'python main-mic.py --model={} --uni_id={} --lr={} --l1={} --l2={} --train_fold=train_fold_{}.txt --test_fold=test_fold_{}.txt --decay_rate={} --decay_epoch={} --mode={} > {}/{}/{}.txt'
+line = 'python main-transformer.py --model={} --uni_id={} --lr={} --l1={} --l2={} --train_fold=train_fold_{}.txt --test_fold=test_fold_{}.txt --decay_rate={} --decay_epoch={} --mode={} > {}/{}/{}.txt'
 
-mode = ['train', 'test']
-model = ['Bi-LSTM']
+mode = ['test']
+model = ['Att']
 rois = [['schaefer', 'tractseg', 'tian', 'aan']]
-lr_list = ['0.00001']
+lr_list = ['0.0001']
 l1_list = ['0', '0.0001', '0.1', '0.3', '0.5', '0.7', '0.9', '0.9999', '1']
-decay_rate = ['0.05']
-decay_epoch = ['30']
+decay_rate = ['0.5']
+decay_epoch = ['2']
 
 line_list = []
 with open(fname, 'w') as f:

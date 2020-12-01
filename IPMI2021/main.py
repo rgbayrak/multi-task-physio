@@ -13,8 +13,6 @@ import numpy as np
 import csv
 import os
 
-
-
 # def print_network(net):
 #     num_params = 0
 #     for param in net.parameters():
@@ -130,19 +128,19 @@ def train_model(opt):
             elif opt.early_stop != -1:
                 if avg_val_loss > min_loss:
                     seq_increase += 1
-                    # if the validation loss does not decrease for 3 consecutive epochs, reduce lr
-                    if seq_increase == 3:
-                        opt.lr = opt.lr * opt.decay_rate
                     if seq_increase == opt.early_stop:
                         break
+                    if opt.decay_epoch != -1 and seq_increase % opt.decay_epoch == 0:
+                        opt.lr = opt.lr * opt.decay_rate
+                        print('\nnew lr: {}'.format(opt.lr))
                 else:
                     seq_increase = 0
 
-            # if the validation loss does not decrease for specified number of epochs, reduce lr
-            if opt.decay_epoch != -1:
-                if epoch % opt.decay_epoch == 0:
-                    opt.lr = opt.lr * opt.decay_rate
-                    print('new lr: {}'.format(opt.lr))
+            # # if the validation loss does not decrease for specified number of epochs, reduce lr
+            # if opt.decay_epoch != -1:
+            #     if epoch % opt.decay_epoch == 0:
+            #         opt.lr = opt.lr * opt.decay_rate
+            #         print('new lr: {}'.format(opt.lr))
 
             # progress bar
             pbar.set_description(
@@ -264,10 +262,10 @@ def main():
     # pass in command line arguments
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--model', type=str, default='Att')
+    parser.add_argument('--model', type=str, default='Bi-LSTM')
     parser.add_argument('--multi', type=str, default='both')
-    parser.add_argument('--uni_id', type=str, default='Att_findlab90fwm_lr_0.001_l1_0.5')
-    parser.add_argument('--epoch', type=int, default=11, help='number of epochs to train for, default=10')
+    parser.add_argument('--uni_id', type=str, default='Bi-LSTM_all4_lr_0.001_l1_0.5')
+    parser.add_argument('--epoch', type=int, default=15, help='number of epochs to train for, default=10')
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate, default=0.0001')
     parser.add_argument('--l1', type=float, default=0.5, help='loss weighting for , default=0.0001')
     parser.add_argument('--l2', type=float, default=0.5, help='learning rate, default=0.0001')
@@ -276,14 +274,14 @@ def main():
     parser.add_argument('--val_split', type=float, default=0.15, help='percentage of the split')
 
     parser.add_argument('--out_dir', type=str, default='/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/out/', help='Path to output directory')
-    parser.add_argument('--roi_list', type=str, default=['findlab90', 'fwm'], help='list of rois wanted to be included')
+    parser.add_argument('--roi_list', type=str, default=['schaefer', 'tractseg', 'tian', 'aan'], help='list of rois wanted to be included')
     parser.add_argument('--mode', type=str, default='train', help='Determines whether to backpropagate or not')
     parser.add_argument('--train_batch', type=int, default=16, help='Decides size of each training batch')
     parser.add_argument('--test_batch', type=int, default=1, help='Decides size of each val batch')
-    parser.add_argument('--decay_rate', type=float, default=0.05, help='Rate at which the learning rate will be decayed')
-    parser.add_argument('--decay_epoch', type=int, default=-1, help='Decay the learning rate after every this many epochs (-1 means no lr decay)')
+    parser.add_argument('--decay_rate', type=float, default=0.5, help='Rate at which the learning rate will be decayed')
+    parser.add_argument('--decay_epoch', type=int, default=1, help='Decay the learning rate after every this many epochs (-1 means no lr decay)')
     parser.add_argument('--dropout', type=float, default=0.10, help='Continue training from saved model')
-    parser.add_argument('--early_stop', type=int, default=3, help='Decide to stop early after this many epochs in which the validation loss increases (-1 means no early stopping)')
+    parser.add_argument('--early_stop', type=int, default=5, help='Decide to stop early after this many epochs in which the validation loss increases (-1 means no early stopping)')
     parser.add_argument('--continue_training', action='store_true', help='Continue training from saved model')
 
     opt = parser.parse_args()

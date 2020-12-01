@@ -10,7 +10,7 @@ import matplotlib.ticker as plticker
 warnings.filterwarnings("ignore")
 
 # folds together
-net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/single-roi-models/out/results/'
+net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/single-roi-models/findlabfwm_out/results/'
 results_dir = os.listdir(net_dir)
 all_results = sorted(results_dir, reverse=False)
 
@@ -51,41 +51,66 @@ for folder in all_results:
     allhr_data.append(hr_data)
 # plt.violinplot(all_data)
 
-rv_means = np.mean(allrv_data, axis=1)
-hr_means = np.mean(allhr_data, axis=1)
+rv_means = np.array([np.mean(ri) for ri in allrv_data])
+hr_means = np.array([np.mean(hi) for hi in allhr_data])
 
-with open('findlab90_roisnames.txt', 'r') as fd:
-    reader = csv.reader(fd)
-    labels_roifindlab = []
-    for row in reader:
-        labels_roifindlab.append(row[0])
+# with open('findlab90_roisnames.txt', 'r') as fd:
+#     reader = csv.reader(fd)
+#     labels_roifindlab = []
+#     for row in reader:
+#         labels_roifindlab.append(row[0])
 
 # for i in range(12):
 #     labels_roifindlab.append(i+1)
 
-wm_labels = ['Cingulum and associated tracts', ' Uncinate and middle temporal lobe tracts', 'Sensorimotor superficial '
-             'white-matter system', 'Forceps minor system', 'Superior longitudinal fasciculus system',
-             'visual superficial white matter system', 'inferior longitudinal fasciculus system',
-             'inferior corticospinal tract', 'posterior cerebellar tracts', 'dorsal frontoparietal tracts',
-             'deep frontal white matter', 'ventral frontoparietal tracts']
-
-for wm in wm_labels:
-    labels_roifindlab.append(wm)
+# wm_labels = ['Cingulum and associated tracts', ' Uncinate and middle temporal lobe tracts', 'Sensorimotor superficial '
+#              'white-matter system', 'Forceps minor system', 'Superior longitudinal fasciculus system',
+#              'visual superficial white matter system', 'inferior longitudinal fasciculus system',
+#              'inferior corticospinal tract', 'posterior cerebellar tracts', 'dorsal frontoparietal tracts',
+#              'deep frontal white matter', 'ventral frontoparietal tracts']
+#
+# for wm in wm_labels:
+#     labels_roifindlab.append(wm)
 
 # sort
+# convert the ROI num labels to int
 desired_array = [int(numeric_string) for numeric_string in num_roi]
+# sort and get the idx
 new = np.array(desired_array).argsort()
+# use idx to sort the arrays
 new_num_roi = np.array(desired_array)[new]
 new_rv_means = np.array(rv_means)[new]
 new_hr_means = np.array(hr_means)[new]
 
-plt.scatter(np.arange(len(new_rv_means)), new_rv_means)
-plt.scatter(np.arange(len(new_hr_means)), new_hr_means)
+# sort based on rv
+rv_idx = rv_means.argsort()
+new_rv_means = np.array(rv_means)[rv_idx]
+new_hr_means = np.array(hr_means)[rv_idx]
+
+# sort based on hr
+hr_idx = hr_means.argsort()
+new_rv_means = np.array(rv_means)[hr_idx]
+new_hr_means = np.array(hr_means)[hr_idx]
+
+# sort based on the difference
+diff_idx = (rv_means-hr_means).argsort()
+new_rv_means = np.array(rv_means)[diff_idx]
+new_hr_means = np.array(hr_means)[diff_idx]
+
+# as is
+new_rv_means = rv_means
+new_hr_means = hr_means
+
+plt.scatter(np.arange(len(new_rv_means)), new_rv_means, marker='*', s=64)
+plt.scatter(np.arange(len(new_hr_means)), new_hr_means, marker='*', s=64)
+# plt.plot(new_rv_means)
+# plt.plot(new_hr_means)
 plt.xticks(np.arange(291), labels=new_num_roi, rotation='vertical', fontsize=6)
-plt.grid()
+plt.ylim([-0.01, 0.5])
 plt.ylabel(r'${\mu}$' + ' Pearson Correlation')
 plt.legend(['rv', 'hr'])
 plt.show()
+plt.grid()
 pass
 # vecrv = np.reshape(allrv_data, [-1])
 # vechr = np.reshape(allhr_data, [-1])

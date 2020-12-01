@@ -26,6 +26,7 @@ def train(model, device, train_loader, optim, opt):
         output_rv, output_hr = model(input)
         # print('{}: {}'.format('pred', output_rv.shape))
         # print('{}: {}'.format('target', target_rv.shape))
+        # criterion = RMSELoss()
         loss_rv = pearsonr(output_rv.squeeze(), target_rv.squeeze())
         loss_hr = pearsonr(output_hr.squeeze(), target_hr.squeeze())
         loss = opt.l1 * loss_rv + opt.l2 * loss_hr

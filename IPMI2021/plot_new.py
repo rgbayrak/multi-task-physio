@@ -9,11 +9,11 @@ import matplotlib.ticker as plticker
 warnings.filterwarnings("ignore")
 
 # folds together
-net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/miccai-models/out/rresults/'
+net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/out/rresults/'
 results_dir = os.listdir(net_dir)
 all_results = sorted(results_dir, reverse=False)
 
-# list_loss = ['l1_0', 'l1_0.0001', 'l1_0.3', 'l1_0.5', 'l1_0.7', 'l1_0.9999', 'l1_1']
+list_loss = ['l1_0', 'l1_0.0001', 'l1_0.3', 'l1_0.5', 'l1_0.7', 'l1_0.9999', 'l1_1']
 allhr_data = []
 allrv_data = []
 labels = []
@@ -23,12 +23,14 @@ rois = []
 
 list = []
 for folder in all_results:
-    # if 'l1_0.5' in folder:
     parts = folder.split('_')
     labels.append(parts[0])
     rois.append(parts[1])
     lrate.append(parts[3])
-    loss.append(parts[5])
+    loss.append(
+
+
+        [5])
     fold_dir = os.path.join(net_dir, folder, 'test')
     rv_data = []
     hr_data = []
@@ -97,30 +99,26 @@ plt.rc('ytick', labelsize=MEDIUM_SIZE, color='black')    # fontsize of the tick 
 # sn.stripplot(x='Model Architectures', y='Pearson Correlation', data=df,
 #                    palette=["gray"])
 
-# df = df.loc[df['Lambda RV'] == '0.5']
+# df = df[~df['Lambda RV'].isin(list_loss)] did not work
 #
 # ax1 = sn.swarmplot(x='Lambda RV', y='Pearson Correlation', data=df, split=True, hue='Physio Type',
 #                     size=4, dodge=True)
 #
 # handles, labels = ax1.get_legend_handles_labels()
 # #
-ax = sn.lineplot(x='Lambda RV', y='Pearson Correlation', data=df, style='Model Architectures', hue='Physio Type', estimator=np.median, markers=True, ci='sd')
+ax = sn.lineplot(x='Lambda RV', y='Pearson Correlation', data=df, style='Physio Type', hue='Model Architectures', estimator=np.median, markers=True, ci='sd')
 handles, labels = ax.get_legend_handles_labels()
-#
-# ax2 = sn.violinplot(x='Lambda RV', y='Pearson Correlation', data=df, split=False, hue='Physio Type',
-#                     scale="count")
-#
-# handles, labels = ax2.get_legend_handles_labels()
+# #
 
 # ['dodgerblue', 'palevioletred', 'mediumseagreen', 'gold', 'slateblue']
 
 # ax.grid(color='gray', linestyle='-', linewidth=.8)
-plt.legend(loc='lower left', ncol=5, handles=handles, bbox_to_anchor=(0.0, 1.00))
+plt.legend(loc='lower left', ncol=10, handles=handles, bbox_to_anchor=(0.0, 1.00))
 # ax.set_title('RV')
 
 # loc = plticker.MultipleLocator(base=0.1) # this locator puts ticks at regular intervals
 # ax.yaxis.set_major_locator(loc)
-# plt.show()
+plt.show()
 plt.savefig('/home/bayrakrg/neurdy/pycharm/multi-task-physio/ISBI2020/figures/contribution.png', bbox_inches='tight', dpi=300)
 plt.show()
 print()

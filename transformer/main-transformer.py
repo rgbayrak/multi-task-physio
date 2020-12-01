@@ -53,13 +53,13 @@ def train_model(opt):
     val_loader = torch.utils.data.DataLoader(dataset=val_set, batch_size=1, shuffle=True, **kwargs)
 
     # Model parameters
-    d_model = 300  # dimension of the input vector
-    q = 11  # Query size
-    v = 11  # Value size
-    h = 11  # Number of heads
+    d_model = 600  # dimension of the input vector
+    q = 16  # Query size
+    v = 16  # Value size
+    h = 8  # Number of heads
     N = 1  # Number of encoder and decoder to stack
-    attention_size = 300  # Attention window size
-    dropout = 0.2  # Dropout rate
+    attention_size = 8  # Attention window size
+    dropout = 0.3  # Dropout rate
     pe = 'regular'  # Positional encoding
     chunk_mode = None
     d_input = chs  # the dimension of the input X for each time step
@@ -146,19 +146,19 @@ def train_model(opt):
             elif opt.early_stop != -1:
                 if avg_val_loss > min_loss:
                     seq_increase += 1
-                    # if the validation loss does not decrease for 3 consecutive epochs, reduce lr
-                    if seq_increase == 3:
-                        opt.lr = opt.lr * opt.decay_rate
                     if seq_increase == opt.early_stop:
                         break
+                    elif opt.decay_epoch != -1 and seq_increase % opt.decay_epoch == 0:
+                        opt.lr = opt.lr * opt.decay_rate
+                        print('\nnew lr: {}'.format(opt.lr))
                 else:
                     seq_increase = 0
 
-            # if the validation loss does not decrease for specified number of epochs, reduce lr
-            if opt.decay_epoch != -1:
-                if epoch % opt.decay_epoch == 0:
-                    opt.lr = opt.lr * opt.decay_rate
-                    print('new lr: {}'.format(opt.lr))
+            # # if the validation loss does not decrease for specified number of epochs, reduce lr
+            # if opt.decay_epoch != -1:
+            #     if epoch % opt.decay_epoch == 0:
+            #         opt.lr = opt.lr * opt.decay_rate
+            #         print('new lr: {}'.format(opt.lr))
 
             # progress bar
             pbar.set_description(
@@ -182,13 +182,13 @@ def test_model(opt):
 
     # Model parameters
     d_model = 600  # dimension of the input vector
-    q = 8  # Query size
-    v = 8  # Value size
+    q = 16  # Query size
+    v = 16  # Value size
     h = 8  # Number of heads
-    N = 6  # Number of encoder and decoder to stack
-    attention_size = 600  # Attention window size
-    dropout = 0.2  # Dropout rate
-    pe = 'original'  # Positional encoding
+    N = 1  # Number of encoder and decoder to stack
+    attention_size = 8  # Attention window size
+    dropout = 0.3  # Dropout rate
+    pe = 'regular'  # Positional encoding
     chunk_mode = None
     d_input = chs  # the dimension of the input X for each time step
     d_output = 1
@@ -245,10 +245,10 @@ def test_model(opt):
     fold_file = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/k_fold_files/' + opt.test_fold
     # fold_file = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/social_files/' + opt.test_fold
 
-    rvp = '{}/results/{}/test/{}/rv_pred.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
-    rvt = '{}/results/{}/test/{}/rv_target.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
-    hrp = '{}/results/{}/test/{}/hr_pred.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
-    hrt = '{}/results/{}/test/{}/hr_target.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
+    rvp = '{}/rresults/{}/test/{}/rv_pred.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
+    rvt = '{}/rresults/{}/test/{}/rv_target.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
+    hrp = '{}/rresults/{}/test/{}/hr_pred.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
+    hrt = '{}/rresults/{}/test/{}/hr_target.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
 
     os.makedirs(rvp.rstrip('rv_pred.csv'))
 
@@ -297,7 +297,7 @@ def main():
     parser.add_argument('--model', type=str, default='Att')
     parser.add_argument('--multi', type=str, default='both')
     parser.add_argument('--uni_id', type=str, default='Att_four_lr_0.0001_l1_0.4')
-    parser.add_argument('--epoch', type=int, default=20, help='number of epochs to train for, default=10')
+    parser.add_argument('--epoch', type=int, default=200, help='number of epochs to train for, default=10')
     parser.add_argument('--lr', type=float, default=0.0001, help='learning rate, default=0.0001')
     parser.add_argument('--l1', type=float, default=0.4, help='loss weighting for , default=0.0001')
     parser.add_argument('--l2', type=float, default=0.6, help='learning rate, default=0.0001')
@@ -307,12 +307,12 @@ def main():
 
     parser.add_argument('--out_dir', type=str, default='/home/bayrakrg/neurdy/pycharm/multi-task-physio/transformer/out/', help='Path to output directory')
     parser.add_argument('--roi_list', type=str, default=['schaefer', 'tractseg', 'tian', 'aan'], help='list of rois wanted to be included')
-    parser.add_argument('--mode', type=str, default='train', help='Determines whether to backpropagate or not')
+    parser.add_argument('--mode', type=str, default='test', help='Determines whether to backpropagate or not')
     parser.add_argument('--train_batch', type=int, default=4, help='Decides size of each training batch')
     parser.add_argument('--test_batch', type=int, default=1, help='Decides size of each val batch')
     parser.add_argument('--decay_rate', type=float, default=0.5, help='Rate at which the learning rate will be decayed')
     parser.add_argument('--decay_epoch', type=int, default=-1, help='Decay the learning rate after every this many epochs (-1 means no lr decay)')
-    parser.add_argument('--early_stop', type=int, default=4, help='Decide to stop early after this many epochs in which the validation loss increases (-1 means no early stopping)')
+    parser.add_argument('--early_stop', type=int, default=30, help='Decide to stop early after this many epochs in which the validation loss increases (-1 means no early stopping)')
     parser.add_argument('--continue_training', action='store_true', help='Continue training from saved model')
 
     opt = parser.parse_args()

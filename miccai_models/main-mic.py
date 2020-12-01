@@ -53,9 +53,9 @@ def train_model(opt):
 
     # load network
     if opt.model == 'U-Net':
-        model = UNet(102, 1, opt)
+        model = UNet(chs, 1, opt)
     elif opt.model == 'Bi-LSTM':
-        model = BidirectionalLSTM(102, 600, 1)
+        model = BidirectionalLSTM(chs, 600, 1)
     else:
         print('Error!')
 
@@ -168,9 +168,9 @@ def test_model(opt):
 
     # load network
     if opt.model == 'U-Net':
-        model = UNet(102, 1, opt)
+        model = UNet(chs, 1, opt)
     elif opt.model == 'Bi-LSTM':
-        model = BidirectionalLSTM(102, 600, 1)
+        model = BidirectionalLSTM(chs, 600, 1)
     else:
         print('Error!')
 
@@ -270,7 +270,7 @@ def main():
 
     parser.add_argument('--model', type=str, default='U-Net')
     parser.add_argument('--multi', type=str, default='both')
-    parser.add_argument('--uni_id', type=str, default='U-Net_findlab90fwm_lr_0.001_l1_0.5')
+    parser.add_argument('--uni_id', type=str, default='U-Net_all4_lr_0.001_l1_0.5')
     parser.add_argument('--epoch', type=int, default=3000, help='number of epochs to train for, default=10')
     parser.add_argument('--lr', type=float, default=0.000001, help='learning rate, default=0.0001')
     parser.add_argument('--l1', type=float, default=0.5, help='loss weighting for , default=0.0001')
@@ -279,8 +279,8 @@ def main():
     parser.add_argument('--train_fold', default='train_fold_4.txt', help='train_fold_k')
     parser.add_argument('--val_split', type=float, default=0.15, help='percentage of the split')
 
-    parser.add_argument('--out_dir', type=str, default='/home/bayrakrg/neurdy/pycharm/multi-task-physio/miccai-models/out/', help='Path to output directory')
-    parser.add_argument('--roi_list', type=str, default=['findlab90', 'fwm'], help='list of rois wanted to be included')
+    parser.add_argument('--out_dir', type=str, default='/home/bayrakrg/neurdy/pycharm/multi-task-physio/miccai_models/out/', help='Path to output directory')
+    parser.add_argument('--roi_list', type=str, default=['schaefer', 'tractseg', 'tian', 'aan'], help='list of rois wanted to be included')
     parser.add_argument('--mode', type=str, default='train', help='Determines whether to backpropagate or not')
     parser.add_argument('--train_batch', type=int, default=32, help='Decides size of each training batch')
     parser.add_argument('--test_batch', type=int, default=1, help='Decides size of each val batch')
