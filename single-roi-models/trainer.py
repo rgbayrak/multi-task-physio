@@ -16,7 +16,7 @@ def train(model, device, train_loader, optim, opt):
 
     for batch_idx, sample in enumerate(train_loader):
 
-        input = sample['roi']
+        input = sample['regs']
         target_rv = sample['rv']
         target_hr = sample['hr']
         target_rv = target_rv.type(torch.FloatTensor)
@@ -67,7 +67,7 @@ def test(model, device, test_loader, opt):
 
     with torch.no_grad():
         for batch_idx, sample in enumerate(test_loader):
-            input = sample['roi']
+            input = sample['regs']
             target_rv = sample['rv']
             target_hr = sample['hr']
             hr_paths = sample['hr_path']

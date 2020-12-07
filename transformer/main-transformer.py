@@ -53,18 +53,18 @@ def train_model(opt):
     val_loader = torch.utils.data.DataLoader(dataset=val_set, batch_size=1, shuffle=True, **kwargs)
 
     # Model parameters
-    d_model = 600  # dimension of the input vector
-    q = 16  # Query size
-    v = 16  # Value size
+    d_model = 2000  # latent dimension
+    q = 8  # Query size
+    v = 8  # Value size
     h = 8  # Number of heads
-    N = 1  # Number of encoder and decoder to stack
-    attention_size = 8  # Attention window size
+    N = 4  # try 2.  Number of encoder and decoder to stack
+    attention_size = 16  # Attention window size (Catie said: max 16 time points before or after, ds?)
     dropout = 0.3  # Dropout rate
-    pe = 'regular'  # Positional encoding
+    pe = 'original'  # Positional encoding
     chunk_mode = None
-    d_input = chs  # the dimension of the input X for each time step
+    d_input = chs  # the dimension of the input X for each time step 497 ROIs
     d_output = 1
-    # x input shape should be (Batch, K, d_input) = (1, 600, 102)
+    # x input shape should be (Batch, K, d_input) = (4, 600, 497)
 
     # the network
     if opt.model == 'Att':
@@ -181,16 +181,16 @@ def test_model(opt):
     # print('hi!')
 
     # Model parameters
-    d_model = 600  # dimension of the input vector
-    q = 16  # Query size
-    v = 16  # Value size
+    d_model = 2000  # latent dimension
+    q = 8  # Query size
+    v = 8  # Value size
     h = 8  # Number of heads
-    N = 1  # Number of encoder and decoder to stack
-    attention_size = 8  # Attention window size
+    N = 4  # try 2.  Number of encoder and decoder to stack
+    attention_size = 16  # Attention window size (Catie said: max 16 time points before or after, ds?)
     dropout = 0.3  # Dropout rate
-    pe = 'regular'  # Positional encoding
+    pe = 'original'  # Positional encoding
     chunk_mode = None
-    d_input = chs  # the dimension of the input X for each time step
+    d_input = chs  # the dimension of the input X for each time step 497 ROIs
     d_output = 1
 
     # the network
@@ -296,11 +296,12 @@ def main():
 
     parser.add_argument('--model', type=str, default='Att')
     parser.add_argument('--multi', type=str, default='both')
-    parser.add_argument('--uni_id', type=str, default='Att_four_lr_0.0001_l1_0.4')
+    parser.add_argument('--uni_id', type=str, default='Att_all4_pearson')
     parser.add_argument('--epoch', type=int, default=200, help='number of epochs to train for, default=10')
     parser.add_argument('--lr', type=float, default=0.0001, help='learning rate, default=0.0001')
-    parser.add_argument('--l1', type=float, default=0.4, help='loss weighting for , default=0.0001')
-    parser.add_argument('--l2', type=float, default=0.6, help='learning rate, default=0.0001')
+    parser.add_argument('--l1', type=float, default=0.5, help='loss weighting for , default=0.0001')
+    parser.add_argument('--l2', type=float, default=0.5, help='learning rate, default=0.0001')
+    parser.add_argument('--loss', type=str, default='pearson', help='loss function')
     parser.add_argument('--test_fold', default='test_fold_1.txt', help='test_fold_k')
     parser.add_argument('--train_fold', default='train_fold_1.txt', help='train_fold_k')
     parser.add_argument('--val_split', type=float, default=0.15, help='percentage of the split')

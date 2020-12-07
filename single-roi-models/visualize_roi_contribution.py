@@ -1,6 +1,7 @@
 '''
 Author: Roza G. Bayrak
-THIS SCRIPT IS USED TO VISUALIZE SINGLE ROI MODELS FOR IPMI 2021 SUBMISSION
+THIS SCRIPT IS USED TO VISUALIZE SINGLE ROI MODELS AS SQUARES
+FOR IPMI 2021 SUBMISSION
 '''
 
 import os
@@ -10,17 +11,9 @@ import matplotlib.pyplot as plt
 import warnings
 import csv
 
-# folds together
-net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/single-roi-models/out/results/'
-results_dir = os.listdir(net_dir)
+path_labels = '/home/bayrakrg/neurdy/pycharm/atlas_processing/schaefer_gradient_info.csv'
+with open(path_labels, 'r') as f:
+    content = f.readlines()
 
-rois = []
-atlases = []
-for folder in results_dir:
-    if 'tianschaefer' in folder:
-        parts = folder.split('_')
-        if not atlases:
-            atlases.append(parts[1])
-        rois.append(parts[3])
-pass
+
 

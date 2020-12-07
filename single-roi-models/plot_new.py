@@ -10,108 +10,119 @@ import matplotlib.ticker as plticker
 warnings.filterwarnings("ignore")
 
 # folds together
-net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/single-roi-models/findlabfwm_out/results/'
-results_dir = os.listdir(net_dir)
-all_results = sorted(results_dir, reverse=False)
+net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/single-roi-models/out/results/'
+all_results = os.listdir(net_dir)
+
+# get the file names in the order that they were fed in to the networks
+path_labels = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/single-roi-models/all4.txt'
+with open(path_labels, 'r') as f:
+    fname = f.readlines()
+
+for k in range(len(fname)):
+    fname[k] = [str(x) for x in fname[k].strip('\n').split(',')]
 
 # list_loss = ['l1_0', 'l1_0.0001', 'l1_0.3', 'l1_0.5', 'l1_0.7', 'l1_0.9999', 'l1_1']
 allhr_data = []
 allrv_data = []
 labels = []
-lrate = []
-loss = []
-rois = []
-num_roi = []
+atlas = []
+ids = []
 
 list = []
-for folder in all_results:
-    # if 'l1_0.5' in folder:
-    parts = folder.split('_')
-    labels.append(parts[0])
-    rois.append(parts[1])
-    num_roi.append(parts[3])
-    lrate.append(parts[5])
-    loss.append(parts[7])
-    fold_dir = os.path.join(net_dir, folder, 'test')
-    rv_data = []
-    hr_data = []
-    for o in os.listdir(fold_dir):
-        if os.path.isdir(os.path.join(fold_dir, o)):
-            files = os.listdir(os.path.join(fold_dir, o))
-            for file in files:
-                if 'pred_scans' in file:
-                    path = os.path.join(fold_dir, o, file)
-                    with open(path, 'r') as f:
-                        lines = f.readlines()
-                        for line in lines:
-                            rv_data.append(float(line.strip('\n').split(',')[2]))
-                            hr_data.append(float(line.strip('\n').split(',')[3]))
+val_loss = []
+for j, z in enumerate(fname):
+    for folder in all_results:
+        if folder.split('roi_')[1] == z[0]:
+            print(z[0] + ': ' + folder)
+            # load validation file  to get the best model accuracy
+            val_path = net_dir + folder + '/validate_loss_split_train_fold_0.txt'
+            with open(val_path, 'r') as f:
+                value = f.readlines()
 
-    allrv_data.append(rv_data)
-    allhr_data.append(hr_data)
+            for i in range(len(value)):
+                value[i] = [float(x) for x in value[i].strip('\n').split(',')]
+
+            parts = folder.split('_')
+            labels.append(folder.replace('Bi-LSTM_'+parts[1]+'_roi_', ''))
+            atlas.append(parts[1])
+            val_loss.append(np.nanmax(value))
+            ids.append(j)
+
+            fold_dir = os.path.join(net_dir, folder, 'test')
+            rv_data = []
+            hr_data = []
+            for o in os.listdir(fold_dir):
+                if os.path.isdir(os.path.join(fold_dir, o)):
+                    files = os.listdir(os.path.join(fold_dir, o))
+                    for file in files:
+                        if 'pred_scans' in file:
+                            path = os.path.join(fold_dir, o, file)
+                            with open(path, 'r') as f:
+                                lines = f.readlines()
+                                for line in lines:
+                                    rv_data.append(float(line.strip('\n').split(',')[2]))
+                                    hr_data.append(float(line.strip('\n').split(',')[3]))
+
+
+            allrv_data.append(rv_data)
+            allhr_data.append(hr_data)
 # plt.violinplot(all_data)
 
 rv_means = np.array([np.mean(ri) for ri in allrv_data])
 hr_means = np.array([np.mean(hi) for hi in allhr_data])
 
-# with open('findlab90_roisnames.txt', 'r') as fd:
-#     reader = csv.reader(fd)
-#     labels_roifindlab = []
-#     for row in reader:
-#         labels_roifindlab.append(row[0])
-
-# for i in range(12):
-#     labels_roifindlab.append(i+1)
-
-# wm_labels = ['Cingulum and associated tracts', ' Uncinate and middle temporal lobe tracts', 'Sensorimotor superficial '
-#              'white-matter system', 'Forceps minor system', 'Superior longitudinal fasciculus system',
-#              'visual superficial white matter system', 'inferior longitudinal fasciculus system',
-#              'inferior corticospinal tract', 'posterior cerebellar tracts', 'dorsal frontoparietal tracts',
-#              'deep frontal white matter', 'ventral frontoparietal tracts']
+# # sort based on rv
+# idx = rv_means.argsort()
 #
-# for wm in wm_labels:
-#     labels_roifindlab.append(wm)
+# # # sort based on hr
+# idx = hr_means.argsort()
 
-# sort
-# convert the ROI num labels to int
-desired_array = [int(numeric_string) for numeric_string in num_roi]
-# sort and get the idx
-new = np.array(desired_array).argsort()
-# use idx to sort the arrays
-new_num_roi = np.array(desired_array)[new]
-new_rv_means = np.array(rv_means)[new]
-new_hr_means = np.array(hr_means)[new]
-
-# sort based on rv
-rv_idx = rv_means.argsort()
-new_rv_means = np.array(rv_means)[rv_idx]
-new_hr_means = np.array(hr_means)[rv_idx]
-
-# sort based on hr
-hr_idx = hr_means.argsort()
-new_rv_means = np.array(rv_means)[hr_idx]
-new_hr_means = np.array(hr_means)[hr_idx]
+# sort by validation loss
+# idx = np.array(val_loss).argsort()
 
 # sort based on the difference
-diff_idx = (rv_means-hr_means).argsort()
-new_rv_means = np.array(rv_means)[diff_idx]
-new_hr_means = np.array(hr_means)[diff_idx]
+# idx = (rv_means-hr_means).argsort()
 
-# as is
-new_rv_means = rv_means
-new_hr_means = hr_means
+# val_loss = np.array(val_loss)[idx]
+# rv_means = np.array(rv_means)[idx]
+# hr_means = np.array(hr_means)[idx]
+# labels = np.array(labels)[idx]
+# ids = np.array(ids)[idx]
+# atlas = np.array(atlas)[idx]
 
-plt.scatter(np.arange(len(new_rv_means)), new_rv_means, marker='*', s=64)
-plt.scatter(np.arange(len(new_hr_means)), new_hr_means, marker='*', s=64)
-# plt.plot(new_rv_means)
-# plt.plot(new_hr_means)
-plt.xticks(np.arange(291), labels=new_num_roi, rotation='vertical', fontsize=6)
+plt.scatter(np.arange(len(rv_means)), rv_means, marker='*', s=64, c='#0D5901')
+plt.scatter(np.arange(len(hr_means)), hr_means, marker='*', s=64, c='#B3000C')
+# plt.plot(rv_means)
+# plt.plot(hr_means)
+plt.xticks(np.arange(len(rv_means)), labels=labels, rotation='vertical', fontsize=6)
 plt.ylim([-0.01, 0.5])
 plt.ylabel(r'${\mu}$' + ' Pearson Correlation')
 plt.legend(['rv', 'hr'])
 plt.show()
 plt.grid()
 pass
+
+# dict = []
+# for ii, label in enumerate(labels):
+#     dict.append({'id': ids[ii], 'label': label, 'atlas': atlas[ii], 'rv': str(rv_means[ii]), 'hr': str(hr_means[ii]), 'val': str(val_loss[ii])})
+#
+# csv_columns = ['id', 'label', 'atlas', 'rv', 'hr', 'val']
+# csv_file = "info.csv"
+# try:
+#     with open(csv_file, 'w') as csvfile:
+#         writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
+#         writer.writeheader()
+#         for data in dict:
+#             writer.writerow(data)
+# except IOError:
+#     print("I/O error")
+
+# pass
+
+
+#######################################################################################################################
+# Data Frame
+
 # vecrv = np.reshape(allrv_data, [-1])
 # vechr = np.reshape(allhr_data, [-1])
 # vec = np.concatenate((vecrv, vechr), axis=None)

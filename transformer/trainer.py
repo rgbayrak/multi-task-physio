@@ -26,9 +26,15 @@ def train(model, device, train_loader, optim, opt):
         output_rv, output_hr = model(input)
         # print('{}: {}'.format('pred', output_rv.shape))
         # print('{}: {}'.format('target', target_rv.shape))
-        # criterion = RMSELoss()
-        loss_rv = pearsonr(output_rv.squeeze(), target_rv.squeeze())
-        loss_hr = pearsonr(output_hr.squeeze(), target_hr.squeeze())
+        if opt.loss == 'pearson':
+            loss_rv = pearsonr(output_rv.squeeze(), target_rv.squeeze())
+            loss_hr = pearsonr(output_hr.squeeze(), target_hr.squeeze())
+
+        elif opt.loss == 'mse':
+            criterion = torch.nn.MSELoss()
+            loss_rv = criterion(output_rv.squeeze(), target_rv.squeeze())
+            loss_hr = criterion(output_hr.squeeze(), target_hr.squeeze())
+
         loss = opt.l1 * loss_rv + opt.l2 * loss_hr
 
 
@@ -78,8 +84,16 @@ def test(model, device, test_loader, opt):
             input, target_rv, target_hr = input.to(device), target_rv.to(device), target_hr.to(device)
 
             output_rv, output_hr = model(input)
+
+            # if opt.loss == 'pearson':
             loss_rv = pearsonr(output_rv, target_rv)
             loss_hr = pearsonr(output_hr, target_hr)
+
+            # elif opt.loss == 'mse':
+            #     criterion = torch.nn.MSELoss()
+            #     loss_rv = criterion(output_rv.squeeze(), target_rv.squeeze())
+            #     loss_hr = criterion(output_hr.squeeze(), target_hr.squeeze())
+
             loss = opt.l1 * loss_rv + opt.l2 * loss_hr
 
             # running average

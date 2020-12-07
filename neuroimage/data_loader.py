@@ -222,6 +222,7 @@ class val_to_tensor:
         aan_norm = (aan - aan.mean(axis=0)) / aan.std(axis=0)  # z-score normalization
         roi_norm = np.hstack((schaefer_norm, tractseg_norm, tian_norm, aan_norm))
 
+
         # windowing w=64
         roi = roi_norm[self.idx_list[idx][2]:(self.idx_list[idx][2] + self.w)]
         rv = rv[self.idx_list[idx][2] + int(self.w/2)]
@@ -268,7 +269,7 @@ class test_to_tensor:
                 self.idx_list.append([subj, i])
 
         self.transform = transform
-        self.roi_clust = opt.roi_clust
+        self.roi_list = opt.roi_list
         self.w = opt.window_size
 
     def __len__(self):
@@ -278,9 +279,19 @@ class test_to_tensor:
         single = self.data[self.idx_list[idx][0]]  # passing the subject string to get the other dictionary
         single_paths = self.paths[self.idx_list[idx][0]]
         rv_path = single_paths['RV_filt_ds'][self.idx_list[idx][1]]
-        roi = single[self.roi_clust][self.idx_list[idx][1]]['roi_dat']
+        schaefer = single[self.roi_list[0]][self.idx_list[idx][1]]['roi_dat']
+        tractseg = single[self.roi_list[1]][self.idx_list[idx][1]]['roi_dat']
+        tian = single[self.roi_list[2]][self.idx_list[idx][1]]['roi_dat']
+        aan = single[self.roi_list[3]][self.idx_list[idx][1]]['roi_dat']
         rv = single['RV_filt_ds'][self.idx_list[idx][1]]['rv_filt_ds']
         hr = single['HR_filt_ds'][self.idx_list[idx][1]]['hr_filt_ds']
+
+        # z-score normalization
+        schaefer_norm = (schaefer - schaefer.mean(axis=0)) / schaefer.std(axis=0)  # z-score normalization
+        tractseg_norm = (tractseg - tractseg.mean(axis=0)) / tractseg.std(axis=0)  # z-score normalization
+        tian_norm = (tian - tian.mean(axis=0)) / tian.std(axis=0)  # z-score normalization
+        aan_norm = (aan - aan.mean(axis=0)) / aan.std(axis=0)  # z-score normalization
+        roi = np.hstack((schaefer_norm, tractseg_norm, tian_norm, aan_norm))
 
         single_roi = []
         single_rv = []

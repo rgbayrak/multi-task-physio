@@ -11,87 +11,72 @@ from scipy.io import loadmat
 from skimage import io, transform
 
 
-def get_roi_len(dirs):
-    roi_path = "/bigdata/HCP_1200/power+xifra/resting_min+prepro/bpf-ds/"
-    roi_len = 0
-    for dir in dirs:
-        files = os.listdir(roi_path + dir)
-        roi = loadmat(roi_path + dir + '/' + files[0])
-        key = [x for x in list(roi.keys()) if x.startswith('roi_dat')][0]
-        roi_len += roi[key].shape[1]
-    return roi_len
+def get_reg_len():
+    reg_path = "/bigdata/HCP_1200/power+xifra/resting_min+prepro/bpf-ds/regs/movement"
+    reg_len = 0
+    files = os.listdir(reg_path)
+    reg = loadmat(reg_path + '/' + files[0])
+    key = [x for x in list(reg.keys()) if x.startswith('m_filt_ds')][0]
+    reg_len += reg[key].shape[1]
+    return reg_len
 
 
 def get_sub(path):
     fp = open(path, 'r')
     sublines = fp.readlines()
-    gm_fold = []
+    reg_fold = []
     hr_fold = []
     rv_fold = []
-    ngm_fold = []
 
     for subline in sublines:
-        gm_fold.append(subline)
-        ngm_fold.append(subline)
-        # ngm_fold.append(subline.replace('rois', 'rois_fwm'))
+        reg_fold.append(subline.replace('rois_', 'mv_filt_ds_'))
         hr_fold.append(subline.replace('.mat', '_hr_filt_ds.mat').replace('rois_', ''))
         rv_fold.append(subline.replace('.mat', '_rv_filt_ds.mat').replace('rois_', ''))
     fp.close()
-    return gm_fold, hr_fold, rv_fold, ngm_fold
+    return reg_fold, hr_fold, rv_fold
 
 
 def get_dictionary(fold):
-    roi_path = os.path.join("/bigdata/HCP_1200/power+xifra/resting_min+prepro/bpf-ds/")
+    reg_path = os.path.join("/bigdata/HCP_1200/power+xifra/resting_min+prepro/bpf-ds/regs/movement/")
     hr_path = "/data/HR_filt_ds/"
     rv_path = "/data/RV_filt_ds/"
     fold_path = os.path.join("/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/k_fold_files/", fold)
-    gm_fold, hr_fold, rv_fold, ngm_fold = get_sub(fold_path)
+    reg_fold, hr_fold, rv_fold = get_sub(fold_path)
 
     # # LOOK AT YOUR DATA
-    # x = os.path.join(rv_path, 'RV_filtds_983773_3T_rfMRI_REST1_RL.mat')
-    # rv = loadmat(x)
-    # rv.keys()
-    # type(ROI['roi_dat']), ROI['roi_dat'].shape
-    # type(ROI['roi_inds']), ROI['roi_inds'].shape
+    x = os.path.join(rv_path, '983773_rfMRI_REST1_RL_rv_filt_ds.mat')
+    y = os.path.join(hr_path, '983773_rfMRI_REST1_RL_hr_filt_ds.mat')
+    z = os.path.join(reg_path, 'mv_filt_ds_983773_rfMRI_REST1_RL.mat')
+    rv = loadmat(x)
+    hr = loadmat(y)
+    mv = loadmat(z)
+    rv.keys()
+    # type(mv['m_filt_ds']), mv['m_filt_ds'].shape
     # type(rv['rv_filt_ds']), rv['rv_filt_ds'].shape
     # type(rv['tax']), rv['tax'].shape
 
     data = {}
-    for i, d in enumerate(gm_fold):
-        subdir_parts = gm_fold[i].rstrip(".mat").split('_')
-        subject_id = subdir_parts[1]
+    for i, d in enumerate(reg_fold):
+        subdir_parts = reg_fold[i].rstrip(".mat").split('_')
+        subject_id = subdir_parts[3]
         # print("{}".format(subject_id))
 
-        # clust_list = os.listdir(roi_path)
-        clust_list = ['tractseg', 'aan']
         if subject_id not in data:
-            data[subject_id] = {clust_list[0]: [roi_path + clust_list[0] + '/' + d.rstrip('\n')],
-                                clust_list[1]: [roi_path + clust_list[1] + '/' + d.rstrip('\n')],
+            data[subject_id] = {'MV_filt_ds': [reg_path + reg_fold[i].rstrip('\n')],
                                 'HR_filt_ds': [hr_path + hr_fold[i].rstrip('\n')],
                                 'RV_filt_ds': [rv_path + rv_fold[i].rstrip('\n')]}
-        else:
-            if clust_list[0] and clust_list[1] not in data[subject_id]:
-                data[subject_id][clust_list[0]] = [roi_path + clust_list[0] + '/' + d.rstrip('\n')]
-                data[subject_id][clust_list[1]] = [roi_path + clust_list[1] + '/' + d.rstrip('\n')]
-                data[subject_id]['HR_filt_ds'] = [hr_path + hr_fold[i].rstrip('\n')]
-                data[subject_id]['RV_filt_ds'] = [rv_path + rv_fold[i].rstrip('\n')]
-            else:
-                data[subject_id][clust_list[0]].append(roi_path + clust_list[0] + '/' + d.rstrip('\n'))
-                data[subject_id][clust_list[1]].append(roi_path + clust_list[1] + '/' + d.rstrip('\n'))
-                data[subject_id]['HR_filt_ds'].append(hr_path + hr_fold[i].rstrip('\n'))
-                data[subject_id]['RV_filt_ds'].append(rv_path + rv_fold[i].rstrip('\n'))
 
     # get the paths
     subj_excl = []
     for subj in data:
-        paths = data[subj]['tractseg']
+        paths = data[subj]['MV_filt_ds']
         # keep tract of the subjects that do not have all 4 scans
         if len(paths) == 4:
             subj_excl.append(subj)
 
         scan_order = []
         for path in paths:
-            scan_order.append(path.lstrip('/bigdata/HCP_1200/power+xifra/resting_min+prepro/tractseg/bpf-ds-mat/rois_').rstrip('.mat'))
+            scan_order.append(path.lstrip('/bigdata/HCP_1200/power+xifra/resting_min+prepro/regs/movement/bpf-ds/mv_filt_ds_').rstrip('.mat'))
 
         for k in data[subj]:
             new_paths = []
@@ -109,7 +94,7 @@ def get_dictionary(fold):
 class data_to_tensor():
     """ From pytorch example"""
 
-    def __init__(self, data, roi_list, roi, transform=None):
+    def __init__(self, data, transform=None):
         # go through all the data and load them in
         # start with one worker
         # as soon as I pass to the data loader it is gonna create a copy depending on the workers (threads)
@@ -131,8 +116,6 @@ class data_to_tensor():
 
         self.keys = list(self.data.keys())  # so, we just do it once
         self.transform = transform
-        self.roi_list = roi_list
-        self.roi = roi
 
     def __len__(self):
         return len(self.idx_list)
@@ -142,8 +125,7 @@ class data_to_tensor():
         single = self.data[self.idx_list[idx][0]]  # passing the subject string to get the other dictionary
         single_paths = self.paths[self.idx_list[idx][0]]
         hr_path = single_paths['HR_filt_ds'][self.idx_list[idx][1]]
-        gm = single[self.roi_list[0]][self.idx_list[idx][1]]['roi_dat'][0:600, :]
-        ngm = single[self.roi_list[1]][self.idx_list[idx][1]]['roi_dat'][0:600, :]
+        regs = single['MV_filt_ds'][self.idx_list[idx][1]]['m_filt_ds'][0:600, :]
         hr = single['HR_filt_ds'][self.idx_list[idx][1]]['hr_filt_ds'][0:600, :]  # trimmed
         rv = single['RV_filt_ds'][self.idx_list[idx][1]]['rv_filt_ds'][0:600, :]  # trimmed
 
@@ -151,9 +133,7 @@ class data_to_tensor():
 
         hr_norm = (hr - hr.mean(axis=0)) / hr.std(axis=0)  # z-score normalization
         rv_norm = (rv - rv.mean(axis=0)) / rv.std(axis=0)  # z-score normalization
-        gm_norm = (gm - gm.mean(axis=0)) / gm.std(axis=0)  # z-score normalization
-        ngm_norm = (ngm - ngm.mean(axis=0)) / ngm.std(axis=0)  # z-score normalization
-        roi_norm = np.hstack((gm_norm, ngm_norm))
+        regs_norm = (regs - regs.mean(axis=0)) / regs.std(axis=0)  # z-score normalization
 
         # plt.subplot(311)
         # plt.plot(gm_norm[:, 5], 'g')
@@ -169,12 +149,11 @@ class data_to_tensor():
         # swap axis because
         # numpy: W x C
         # torch: C X W
-        roi_norm = roi_norm.transpose((1, 0))[self.roi]
-        roi_norm = np.expand_dims(roi_norm, axis=0)  # because single roi
+        regs_norm = regs_norm.transpose((1, 0))
         hr_norm = hr_norm.squeeze()
         rv_norm = rv_norm.squeeze()
 
-        sample = {'roi': roi_norm, 'hr': hr_norm, 'rv': rv_norm}
+        sample = {'regs': regs_norm, 'hr': hr_norm, 'rv': rv_norm}
 
         # if self.transform:
         #     sample = self.transform(sample)
@@ -188,7 +167,7 @@ class ToTensor(object):
     """Convert ndarrays in sample to Tensors."""
 
     def __call__(self, sample):
-        roi, hr, rv = sample['roi'], sample['hr'], sample['rv']
+        regs, hr, rv = sample['regs'], sample['hr'], sample['rv']
 
-        return {'roi': torch.from_numpy(roi).type(torch.FloatTensor),
+        return {'regs': torch.from_numpy(regs).type(torch.FloatTensor),
                 'hr': torch.from_numpy(hr).type(torch.FloatTensor), 'rv': torch.from_numpy(rv).type(torch.FloatTensor)}

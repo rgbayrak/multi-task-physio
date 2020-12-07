@@ -9,7 +9,7 @@ import matplotlib.ticker as plticker
 warnings.filterwarnings("ignore")
 
 # folds together
-net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/out/rresults/'
+net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/neuroimage/rresults/'
 results_dir = os.listdir(net_dir)
 all_results = sorted(results_dir, reverse=False)
 
@@ -27,10 +27,7 @@ for folder in all_results:
     labels.append(parts[0])
     rois.append(parts[1])
     lrate.append(parts[3])
-    loss.append(
-
-
-        [5])
+    loss.append(parts[5])
     fold_dir = os.path.join(net_dir, folder, 'test')
     rv_data = []
     hr_data = []

@@ -12,6 +12,7 @@ from tqdm import tqdm
 import scipy as sp
 import csv
 from torchsummary import summary
+import os
 
 
 def print_network(net):
@@ -204,8 +205,6 @@ def test_model(opt):
                     wr = csv.writer(file, delimiter=',')
                     wr.writerow(target_hrs[n])
 
-    return targets, preds
-
 
 def main():
     # pass in command line arguments
@@ -223,7 +222,7 @@ def main():
     parser.add_argument('--val_split', type=float, default=0.15, help='percentage of the split')
 
     parser.add_argument('--out_dir', type=str, default='/home/bayrakrg/neurdy/pycharm/multi-task-physio/neuroimage/', help='Path to output directory')
-    parser.add_argument('--mode', type=str, default='train', help='Determines whether to backpropagate or not')
+    parser.add_argument('--mode', type=str, default='test', help='Determines whether to backpropagate or not')
     parser.add_argument('--train_batch', type=int, default=512, help='Decides size of each training batch')
     parser.add_argument('--test_batch', type=int, default=1, help='Decides size of each val batch')
     parser.add_argument('--decay_rate', type=float, default=0.1, help='Rate at which the learning rate will be decayed')
