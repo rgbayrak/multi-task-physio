@@ -3,7 +3,7 @@ import torchvision.transforms as transforms
 import argparse
 from torch.utils.data import DataLoader
 # from data_loader import *
-from data_loader_regs import *
+from data_loader_select import *
 from trainer import *
 from model import *
 from tqdm import tqdm
@@ -33,7 +33,7 @@ def train_model(opt):
     keys = list(train_data.keys())
 
     # calculate number of regs which becomes the channel
-    chs = get_reg_len()
+    chs = get_roi_len(opt.roi_list)
 
     # assign random validation remove them from train data
     val_split = round(len(train_data) * opt.val_split)
@@ -45,15 +45,15 @@ def train_model(opt):
         del keys[idx]
 
     # load the train/val data as tensor
-    train_set = data_to_tensor(train_data, opt.roi)
+    train_set = data_to_tensor(train_data, opt.roi_list, opt.percent)
     train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=opt.train_batch, shuffle=True, **kwargs)
 
-    val_set = data_to_tensor(val_data, opt.roi)
+    val_set = data_to_tensor(val_data, opt.roi_list, opt.percent)
     val_loader = torch.utils.data.DataLoader(dataset=val_set, batch_size=1, shuffle=True, **kwargs)
 
     # load network
     if opt.model == 'Bi-LSTM':
-        model = BidirectionalLSTM(chs, 2000, 1)
+        model = BidirectionalLSTM(chs, 2048, 1)
     else:
         print('Error!')
 
@@ -152,19 +152,19 @@ def test_model(opt):
     # create fold specific dictionaries
     test_data = get_dictionary(opt.test_fold)
     # get number of  total channels
-    chs = get_reg_len()
+    chs = get_roi_len(opt.roi_list)
 
     # device CPU or GPU
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     kwargs = {'pin_memory': True} if torch.cuda.is_available() else {}
 
-    test_set = data_to_tensor(test_data, opt.roi)
+    test_set = data_to_tensor(test_data, opt.roi_list, opt.percent)
     test_loader = torch.utils.data.DataLoader(dataset=test_set, batch_size=1, **kwargs)
     # print('hi!')
 
     # the network
     if opt.model == 'Bi-LSTM':
-        model = BidirectionalLSTM(chs, 2000, 1)
+        model = BidirectionalLSTM(chs, 2048, 1)
     else:
         print('Error!')
 
@@ -272,11 +272,13 @@ def main():
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate, default=0.0001')
     parser.add_argument('--l1', type=float, default=0.5, help='loss weighting for , default=0.0001')
     parser.add_argument('--l2', type=float, default=0.5, help='learning rate, default=0.0001')
-    parser.add_argument('--mode', type=str, default='test', help='Determines whether to backpropagate or not')
+    parser.add_argument('--mode', type=str, default='train', help='Determines whether to backpropagate or not')
     parser.add_argument('--model', type=str, default='Bi-LSTM')
     parser.add_argument('--multi', type=str, default='both')
     parser.add_argument('--out_dir', type=str, default='/home/bayrakrg/neurdy/pycharm/multi-task-physio/single-roi-models/out/', help='Path to output directory')
+    parser.add_argument('--percent', type=int, default=10, help='train with top % of ROIs')
     parser.add_argument('--roi', type=str, default='regs', help='the roi label')
+    parser.add_argument('--roi_list', type=str, default=['schaefer', 'tractseg', 'tian', 'aan'], help='list of rois wanted to be included')
     parser.add_argument('--test_batch', type=int, default=1, help='Decides size of each val batch')
     parser.add_argument('--test_fold', default='test_fold_0.txt', help='test_fold_k')
     parser.add_argument('--train_fold', default='train_fold_0.txt', help='train_fold_k')

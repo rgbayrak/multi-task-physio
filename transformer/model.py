@@ -1,8 +1,10 @@
 import torch
+torch.manual_seed(11)
 import torch.nn as nn
 from typing import Optional, Union
 import torch.nn.functional as F
 import numpy as np
+np.random.seed(11)
 
 class Transformer(nn.Module):
     """Transformer model from Attention is All You Need.
@@ -72,7 +74,7 @@ class Transformer(nn.Module):
                                                       attention_size=attention_size,
                                                       dropout=dropout,
                                                       chunk_mode=chunk_mode) for _ in range(N)])
-        self.layers_decoding = nn.ModuleList([Decoder(d_model,
+        self.layers_decoding1 = nn.ModuleList([Decoder(d_model,
                                                       q,
                                                       v,
                                                       h,
@@ -82,6 +84,14 @@ class Transformer(nn.Module):
 
         self._embedding = nn.Linear(d_input, d_model)
         self._linear1 = nn.Linear(d_model, d_output)
+
+        self.layers_decoding2 = nn.ModuleList([Decoder(d_model,
+                                                      q,
+                                                      v,
+                                                      h,
+                                                      attention_size=attention_size,
+                                                      dropout=dropout,
+                                                      chunk_mode=chunk_mode) for _ in range(N)])
         self._linear2 = nn.Linear(d_model, d_output)
 
         pe_functions = {
@@ -138,12 +148,15 @@ class Transformer(nn.Module):
             positional_encoding = positional_encoding.to(decoding.device)
             decoding.add_(positional_encoding)
 
-        for layer in self.layers_decoding:
-            decoding = layer(decoding, encoding)
+        for layer in self.layers_decoding1:
+            decoding1 = layer(decoding, encoding)
+
+        for layer in self.layers_decoding2:
+            decoding2 = layer(decoding, encoding)
 
         # Output module
-        output1 = self._linear1(decoding)
-        output2 = self._linear2(decoding)
+        output1 = self._linear1(decoding1)
+        output2 = self._linear2(decoding2)
         return output1, output2
 
 class Decoder(nn.Module):
@@ -407,7 +420,7 @@ def generate_original_PE(length: int, d_model: int) -> torch.Tensor:
     return PE
 
 
-def generate_regular_PE(length: int, d_model: int, period: Optional[int] = 24) -> torch.Tensor:
+def generate_regular_PE(length: int, d_model: int, period: Optional[int] = 64) -> torch.Tensor:
     """Generate positional encoding with a given period.
 
     Parameters
@@ -417,7 +430,7 @@ def generate_regular_PE(length: int, d_model: int, period: Optional[int] = 24) -
     d_model:
         Dimension of the model vector.
     period:
-        Size of the pattern to repeat.
+        Size of the pattern to repeat.300
         Default is 24.
 
     Returns

@@ -91,7 +91,7 @@ def get_dictionary(fold):
 
         scan_order = []
         for path in paths:
-            scan_order.append(path.lstrip('/bigdata/HCP_1200/power+xifra/resting_min+prepro/tractseg/bpf-ds-mat/rois_').rstrip('.mat'))
+            scan_order.append(path.lstrip('/bigdata/HCP_1200/power+xifra/resting_min+prepro/bpf-ds/tractseg/rois_').rstrip('.mat'))
 
         for k in data[subj]:
             new_paths = []

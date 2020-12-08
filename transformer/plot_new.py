@@ -120,7 +120,7 @@ handles, labels = ax.get_legend_handles_labels()
 
 # loc = plticker.MultipleLocator(base=0.1) # this locator puts ticks at regular intervals
 # ax.yaxis.set_major_locator(loc)
-plt.title('Earlier parameters')
+plt.title('Deep Transformer')
 plt.show()
 plt.savefig('/home/bayrakrg/neurdy/pycharm/multi-task-physio/ISBI2020/figures/contribution.png', bbox_inches='tight', dpi=300)
 plt.show()

@@ -22,6 +22,25 @@ def get_roi_len(dirs):
     return roi_len
 
 
+def get_select(percent):
+    # get the percent number of rois from list
+    # this function selects the top percent number of rois for training
+    # requires a csv file that contains rois labels sorted based on validation accuracy score
+    path_labels = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/single-roi-models/sorted_info.csv'
+    with open(path_labels, 'r') as f:
+        next(f)
+        content = f.readlines()
+
+    list_of_regs = []
+    for i in range(len(content)):
+        content[i] = int([x.split(',')[0] for x in content[i].strip().split('\n')][0])
+
+    amount = int(np.round(len(content)/percent))
+    list_of_regs = content[:amount]
+
+    return list_of_regs
+
+
 def get_sub(path):
     fp = open(path, 'r')
     sublines = fp.readlines()
@@ -35,6 +54,7 @@ def get_sub(path):
         rv_fold.append(subline.replace('.mat', '_rv_filt_ds.mat').replace('rois_', ''))
     fp.close()
     return roi_fold, hr_fold, rv_fold
+
 
 def get_dictionary(fold):
     roi_path = os.path.join("/bigdata/HCP_1200/power+xifra/resting_min+prepro/bpf-ds/")
@@ -110,7 +130,7 @@ def get_dictionary(fold):
 class data_to_tensor():
     """ From pytorch example"""
 
-    def __init__(self, data, roi_list, transform=None):
+    def __init__(self, data, roi_list, percent, transform=None):
         # go through all the data and load them in
         # start with one worker
         # as soon as I pass to the data loader it is gonna create a copy depending on the workers (threads)
@@ -133,6 +153,8 @@ class data_to_tensor():
         self.keys = list(self.data.keys())  # so, we just do it once
         self.transform = transform
         self.roi_list = roi_list
+        self.percent = percent
+
 
     def __len__(self):
         return len(self.idx_list)
@@ -157,6 +179,7 @@ class data_to_tensor():
         tractseg_norm = (tractseg - tractseg.mean(axis=0)) / tractseg.std(axis=0)  # z-score normalization
         tian_norm = (tian - tian.mean(axis=0)) / tian.std(axis=0)  # z-score normalization
         aan_norm = (aan - aan.mean(axis=0)) / aan.std(axis=0)  # z-score normalization
+
         roi_norm = np.hstack((schaefer_norm, tractseg_norm, tian_norm, aan_norm))
 
         # plt.subplot(311)
@@ -174,6 +197,12 @@ class data_to_tensor():
         # numpy: W x C
         # torch: C X W
         roi_norm = roi_norm.transpose((1, 0))
+
+        # select rois
+        list_of_regs = get_select(self.percent)
+
+        pass
+        # roi_norm = np.expand_dims(roi_norm, axis=0)  # because single roi
         hr_norm = hr_norm.squeeze()
         rv_norm = rv_norm.squeeze()
 
