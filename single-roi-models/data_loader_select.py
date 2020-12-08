@@ -200,13 +200,16 @@ class data_to_tensor():
 
         # select rois
         list_of_regs = get_select(self.percent)
+        select_roi = []
+        for k in range(len(list_of_regs)):
+            select_roi.append(roi_norm[k])
+        select_roi = np.array(select_roi)
 
-        pass
         # roi_norm = np.expand_dims(roi_norm, axis=0)  # because single roi
         hr_norm = hr_norm.squeeze()
         rv_norm = rv_norm.squeeze()
 
-        sample = {'roi': roi_norm, 'hr': hr_norm, 'rv': rv_norm}
+        sample = {'roi': select_roi, 'hr': hr_norm, 'rv': rv_norm}
 
         # if self.transform:
         #     sample = self.transform(sample)

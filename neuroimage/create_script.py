@@ -10,7 +10,7 @@ line = 'python main_NI.py --model={} --uni_id={} --l1={} --out_dir={} --train_fo
 mode = ['train', 'test']
 model = 'sepCONV1d'
 rois = ['schaefer', 'tractseg', 'tian', 'aan']
-l1_list = ['0', '0.0001', '0.5', '0.9999', '1']
+l1_list = ['0.5', '1', '0']
 
 line_list = []
 with open(fname, 'w') as f:
