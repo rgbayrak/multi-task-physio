@@ -9,7 +9,7 @@ import matplotlib.ticker as plticker
 warnings.filterwarnings("ignore")
 
 # folds together
-net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/neuroimage/rresults/'
+net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/out/rresults/'
 results_dir = os.listdir(net_dir)
 all_results = sorted(results_dir, reverse=False)
 
@@ -116,6 +116,6 @@ plt.legend(loc='lower left', ncol=10, handles=handles, bbox_to_anchor=(0.0, 1.00
 # loc = plticker.MultipleLocator(base=0.1) # this locator puts ticks at regular intervals
 # ax.yaxis.set_major_locator(loc)
 plt.show()
-plt.savefig('/home/bayrakrg/neurdy/pycharm/multi-task-physio/ISBI2020/figures/contribution.png', bbox_inches='tight', dpi=300)
-plt.show()
+# plt.savefig('/home/bayrakrg/neurdy/pycharm/multi-task-physio/ISBI2020/figures/contribution.png', bbox_inches='tight', dpi=300)
+# plt.show()
 print()

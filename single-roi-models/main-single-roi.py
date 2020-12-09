@@ -33,7 +33,8 @@ def train_model(opt):
     keys = list(train_data.keys())
 
     # calculate number of regs which becomes the channel
-    chs = get_roi_len(opt.roi_list)
+    list_of_regs = get_select(opt.percent)
+    chs = len(list_of_regs)
 
     # assign random validation remove them from train data
     val_split = round(len(train_data) * opt.val_split)
@@ -152,7 +153,8 @@ def test_model(opt):
     # create fold specific dictionaries
     test_data = get_dictionary(opt.test_fold)
     # get number of  total channels
-    chs = get_roi_len(opt.roi_list)
+    list_of_regs = get_select(opt.percent)
+    chs = len(list_of_regs)
 
     # device CPU or GPU
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -276,14 +278,14 @@ def main():
     parser.add_argument('--model', type=str, default='Bi-LSTM')
     parser.add_argument('--multi', type=str, default='both')
     parser.add_argument('--out_dir', type=str, default='/home/bayrakrg/neurdy/pycharm/multi-task-physio/single-roi-models/out/', help='Path to output directory')
-    parser.add_argument('--percent', type=int, default=10, help='train with top % of ROIs')
+    parser.add_argument('--percent', type=int, default=50, help='train with top % of ROIs')
     parser.add_argument('--roi', type=str, default='regs', help='the roi label')
     parser.add_argument('--roi_list', type=str, default=['schaefer', 'tractseg', 'tian', 'aan'], help='list of rois wanted to be included')
     parser.add_argument('--test_batch', type=int, default=1, help='Decides size of each val batch')
     parser.add_argument('--test_fold', default='test_fold_0.txt', help='test_fold_k')
     parser.add_argument('--train_fold', default='train_fold_0.txt', help='train_fold_k')
     parser.add_argument('--train_batch', type=int, default=16, help='Decides size of each training batch')
-    parser.add_argument('--uni_id', type=str, default='Bi-LSTM_schaefertian_roi_regs_lr_0.001_l1_0.5')
+    parser.add_argument('--uni_id', type=str, default='AAATEST')
     parser.add_argument('--val_split', type=float, default=0.15, help='percentage of the split')
 
 

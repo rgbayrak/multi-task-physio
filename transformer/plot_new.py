@@ -9,7 +9,7 @@ import matplotlib.ticker as plticker
 warnings.filterwarnings("ignore")
 
 # folds together
-net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/transformer/out/rresults/'
+net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/single-roi-models/out/results_delete/'
 results_dir = os.listdir(net_dir)
 all_results = sorted(results_dir, reverse=False)
 
@@ -20,6 +20,7 @@ labels = []
 lrate = []
 loss = []
 rois = []
+percent = []
 
 list = []
 for folder in all_results:
@@ -27,6 +28,7 @@ for folder in all_results:
     parts = folder.split('_')
     labels.append(parts[0])
     rois.append(parts[1])
+    percent.append(parts[2])
     lrate.append(parts[3])
     loss.append(parts[5])
     fold_dir = os.path.join(net_dir, folder, 'test')

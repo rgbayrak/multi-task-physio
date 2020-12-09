@@ -204,7 +204,7 @@ class data_to_tensor():
         for k in range(len(list_of_regs)):
             select_roi.append(roi_norm[k])
         select_roi = np.array(select_roi)
-
+        print(select_roi.shape)
         # roi_norm = np.expand_dims(roi_norm, axis=0)  # because single roi
         hr_norm = hr_norm.squeeze()
         rv_norm = rv_norm.squeeze()
