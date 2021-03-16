@@ -3,9 +3,9 @@ import torchvision.transforms as transforms
 import argparse
 from torch.utils.data import DataLoader
 # from data_loader import *
-from data_loader_ds import *
-from trainer import *
-from model import *
+from data_loader_Att import *
+from trainer_Att import *
+from model_Att import *
 from tqdm import tqdm
 import scipy as sp
 import matplotlib.pyplot as plt
