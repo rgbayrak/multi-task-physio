@@ -393,7 +393,7 @@ class PositionwiseFeedForward(nn.Module):
         -------
             Output tensor with shape (batch_size, K, d_model).
         """
-        return self._linear2(self._linear1(x))
+        return self._linear2(F.relu(self._linear1(x)))
 
 def generate_original_PE(length: int, d_model: int) -> torch.Tensor:
     """Generate positional encoding as described in original paper.  :class:`torch.Tensor`

@@ -13,7 +13,7 @@ import numpy as np
 np.random.seed(11)
 import csv
 import os
-
+import time
 
 
 # def print_network(net):
@@ -307,12 +307,12 @@ def main():
     #  parser.add_argument('--chunk_mode', type=int, default=None)
 
     # training
-    parser.add_argument('--mode', type=str, default='train', help='Determines whether to backpropagate or not')
+    parser.add_argument('--mode', type=str, default='test', help='Determines whether to backpropagate or not')
     parser.add_argument('--model', type=str, default='Att')
     parser.add_argument('--roi_list', type=str, default=['schaefer', 'tractseg', 'tian', 'aan'], help='list of rois wanted to be included')
     parser.add_argument('--multi', type=str, default='both')
     parser.add_argument('--uni_id', type=str, default='Att_all4_pearson')
-    parser.add_argument('--out_dir', type=str, default='/home/bayrakrg/neurdy/pycharm/multi-task-physio/transformer/out/', help='Path to output directory')
+    parser.add_argument('--out_dir', type=str, default='/home/bayrakrg/neurdy/pycharm/multi-task-physio/transformer/out-ipmi/', help='Path to output directory')
     parser.add_argument('--test_fold', default='test_fold_1.txt', help='test_fold_k')
     parser.add_argument('--train_fold', default='train_fold_1.txt', help='train_fold_k')
     parser.add_argument('--val_split', type=float, default=0.15, help='percentage of the split')
@@ -328,7 +328,7 @@ def main():
 
     # helper
     parser.add_argument('--decay_rate', type=float, default=0.5, help='Rate at which the learning rate will be decayed')
-    parser.add_argument('--decay_epoch', type=int, default=2, help='Decay the learning rate after every this many epochs (-1 means no lr decay)')
+    parser.add_argument('--decay_epoch', type=int, default=-1, help='Decay the learning rate after every this many epochs (-1 means no lr decay)')
     parser.add_argument('--early_stop', type=int, default=10, help='Decide to stop early after this many epochs in which the validation loss increases (-1 means no early stopping)')
     parser.add_argument('--continue_training', action='store_true', help='Continue training from saved model')
 
@@ -347,4 +347,7 @@ def main():
 
 
 if __name__ == '__main__':
+    start_time = time.time()
     main()
+    print("--- %s seconds ---" % (time.time() - start_time))
+

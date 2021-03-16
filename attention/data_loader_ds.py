@@ -12,13 +12,12 @@ from skimage import io, transform
 
 
 def get_roi_len(dirs):
-    roi_path = "/bigdata/HCP_1200/power+xifra/resting_min+prepro/bpf/"
+    roi_path = "/bigdata/HCP_1200/power+xifra/resting_min+prepro/bpf-ds/"
     roi_len = 0
     for dir in dirs:
         files = os.listdir(roi_path + dir)
         roi = loadmat(roi_path + dir + '/' + files[0])
-        key = [x for x in list(roi.keys()) if x.startswith('Y_filt')][0]
-        # key = [x for x in list(roi.keys()) if x.startswith('roi_dat')][0]
+        key = [x for x in list(roi.keys()) if x.startswith('roi_dat')][0]
         roi_len += roi[key].shape[1]
     return roi_len
 
@@ -32,17 +31,33 @@ def get_sub(path):
 
     for subline in sublines:
         roi_fold.append(subline)
-        hr_fold.append(subline.replace('.mat', '_hr_filt.mat').replace('rois_', ''))
-        rv_fold.append(subline.replace('.mat', '_rv_filt.mat').replace('rois_', ''))
+        hr_fold.append(subline.replace('.mat', '_hr_filt_ds.mat').replace('rois_', ''))
+        rv_fold.append(subline.replace('.mat', '_rv_filt_ds.mat').replace('rois_', ''))
     fp.close()
     return roi_fold, hr_fold, rv_fold
 
-def get_dictionary(fold):
-    roi_path = os.path.join("/bigdata/HCP_1200/power+xifra/resting_min+prepro/bpf/")
-    hr_path = "/data/HR_filt/"
-    rv_path = "/data/RV_filt/"
+def get_dictionary(opt):
+    if opt.mode == 'train':
+        fold = opt.train_fold
+    elif opt.mode == 'test':
+        fold = opt.test_fold
+
+    num_sub = None
+
+    roi_path = os.path.join("/bigdata/HCP_1200/power+xifra/resting_min+prepro/bpf-ds/")
+    hr_path = "/data/HR_filt_ds/"
+    rv_path = "/data/RV_filt_ds/"
     fold_path = os.path.join("/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/k_fold_files/", fold)
     roi_fold, hr_fold, rv_fold = get_sub(fold_path)
+
+    # # LOOK AT YOUR DATA
+    # x = os.path.join(rv_path, 'RV_filtds_983773_3T_rfMRI_REST1_RL.mat')
+    # rv = loadmat(x)
+    # rv.keys()
+    # type(ROI['roi_dat']), ROI['roi_dat'].shape
+    # type(ROI['roi_inds']), ROI['roi_inds'].shape
+    # type(rv['rv_filt_ds']), rv['rv_filt_ds'].shape
+    # type(rv['tax']), rv['tax'].shape
 
     data = {}
     for i, d in enumerate(roi_fold):
@@ -56,23 +71,23 @@ def get_dictionary(fold):
                                 clust_list[1]: [roi_path + clust_list[1] + '/' + d.rstrip('\n')],
                                 clust_list[2]: [roi_path + clust_list[2] + '/' + d.rstrip('\n')],
                                 clust_list[3]: [roi_path + clust_list[3] + '/' + d.rstrip('\n')],
-                                'HR_filt': [hr_path + hr_fold[i].rstrip('\n')],
-                                'RV_filt': [rv_path + rv_fold[i].rstrip('\n')]}
+                                'HR_filt_ds': [hr_path + hr_fold[i].rstrip('\n')],
+                                'RV_filt_ds': [rv_path + rv_fold[i].rstrip('\n')]}
         else:
             if clust_list[0] and clust_list[1] and clust_list[2] and clust_list[3] not in data[subject_id]:
                 data[subject_id][clust_list[0]] = [roi_path + clust_list[0] + '/' + d.rstrip('\n')]
                 data[subject_id][clust_list[1]] = [roi_path + clust_list[1] + '/' + d.rstrip('\n')]
                 data[subject_id][clust_list[2]] = [roi_path + clust_list[2] + '/' + d.rstrip('\n')]
                 data[subject_id][clust_list[3]] = [roi_path + clust_list[3] + '/' + d.rstrip('\n')]
-                data[subject_id]['HR_filt'] = [hr_path + hr_fold[i].rstrip('\n')]
-                data[subject_id]['RV_filt'] = [rv_path + rv_fold[i].rstrip('\n')]
+                data[subject_id]['HR_filt_ds'] = [hr_path + hr_fold[i].rstrip('\n')]
+                data[subject_id]['RV_filt_ds'] = [rv_path + rv_fold[i].rstrip('\n')]
             else:
                 data[subject_id][clust_list[0]].append(roi_path + clust_list[0] + '/' + d.rstrip('\n'))
                 data[subject_id][clust_list[1]].append(roi_path + clust_list[1] + '/' + d.rstrip('\n'))
                 data[subject_id][clust_list[2]].append(roi_path + clust_list[2] + '/' + d.rstrip('\n'))
                 data[subject_id][clust_list[3]].append(roi_path + clust_list[3] + '/' + d.rstrip('\n'))
-                data[subject_id]['HR_filt'].append(hr_path + hr_fold[i].rstrip('\n'))
-                data[subject_id]['RV_filt'].append(rv_path + rv_fold[i].rstrip('\n'))
+                data[subject_id]['HR_filt_ds'].append(hr_path + hr_fold[i].rstrip('\n'))
+                data[subject_id]['RV_filt_ds'].append(rv_path + rv_fold[i].rstrip('\n'))
 
     # get the paths
     subj_excl = []
@@ -84,7 +99,7 @@ def get_dictionary(fold):
 
         scan_order = []
         for path in paths:
-            scan_order.append(path.replace('/bigdata/HCP_1200/power+xifra/resting_min+prepro/bpf/schaefer/rois_', '').replace('.mat', ''))
+            scan_order.append(path.replace('/bigdata/HCP_1200/power+xifra/resting_min+prepro/bpf-ds/schaefer/rois_', '').replace('.mat', ''))
 
         for k in data[subj]:
             new_paths = []
@@ -96,7 +111,7 @@ def get_dictionary(fold):
             data[subj][k] = new_paths
 
     # print(list(data.keys())) # subject_ids
-    return data
+    return data, num_sub
 
 
 class data_to_tensor():
@@ -119,7 +134,7 @@ class data_to_tensor():
 
         # make sure in get_item that we see all data by
         for subj in self.data.keys():
-            for i, val in enumerate(self.data[subj]['HR_filt']):
+            for i, val in enumerate(self.data[subj]['HR_filt_ds']):
                 self.idx_list.append([subj, i])
 
         self.keys = list(self.data.keys())  # so, we just do it once
@@ -133,13 +148,13 @@ class data_to_tensor():
         # load on the fly
         single = self.data[self.idx_list[idx][0]]  # passing the subject string to get the other dictionary
         single_paths = self.paths[self.idx_list[idx][0]]
-        hr_path = single_paths['HR_filt'][self.idx_list[idx][1]]
-        schaefer = single[self.roi_list[0]][self.idx_list[idx][1]]['Y_filt'][0:1200, :]
-        tractseg = single[self.roi_list[1]][self.idx_list[idx][1]]['Y_filt'][0:1200, :]
-        tian = single[self.roi_list[2]][self.idx_list[idx][1]]['Y_filt'][0:1200, :]
-        aan = single[self.roi_list[3]][self.idx_list[idx][1]]['Y_filt'][0:1200, :]
-        hr = single['HR_filt'][self.idx_list[idx][1]]['hr_filt'][0:1200, :]  # trimmed
-        rv = single['RV_filt'][self.idx_list[idx][1]]['rv_filt'][0:1200, :]  # trimmed
+        hr_path = single_paths['HR_filt_ds'][self.idx_list[idx][1]]
+        schaefer = single[self.roi_list[0]][self.idx_list[idx][1]]['roi_dat'][0:600, :]
+        tractseg = single[self.roi_list[1]][self.idx_list[idx][1]]['roi_dat'][0:600, :]
+        tian = single[self.roi_list[2]][self.idx_list[idx][1]]['roi_dat'][0:600, :]
+        aan = single[self.roi_list[3]][self.idx_list[idx][1]]['roi_dat'][0:600, :]
+        hr = single['HR_filt_ds'][self.idx_list[idx][1]]['hr_filt_ds'][0:600, :]  # trimmed
+        rv = single['RV_filt_ds'][self.idx_list[idx][1]]['rv_filt_ds'][0:600, :]  # trimmed
 
         # # TO DO multi-head
 

@@ -4,21 +4,22 @@ import matplotlib.pyplot as plt
 import warnings
 import seaborn as sn
 import pandas as pd
+from matplotlib import rcParams
 import matplotlib.ticker as plticker
 
 warnings.filterwarnings("ignore")
 
 # folds together
-net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/out/rresults/'
+net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/out/select/'
 results_dir = os.listdir(net_dir)
 all_results = sorted(results_dir, reverse=False)
 
-list_loss = ['l1_0', 'l1_0.0001', 'l1_0.3', 'l1_0.5', 'l1_0.7', 'l1_0.9999', 'l1_1']
 allhr_data = []
 allrv_data = []
 labels = []
 lrate = []
 loss = []
+percent = []
 rois = []
 
 list = []
@@ -28,6 +29,8 @@ for folder in all_results:
     rois.append(parts[1])
     lrate.append(parts[3])
     loss.append(parts[5])
+    # percent.append(parts[7])
+    # fold_dir = os.path.join(net_dir, folder)
     fold_dir = os.path.join(net_dir, folder, 'test')
     rv_data = []
     hr_data = []
@@ -55,28 +58,45 @@ frame_labels = []
 frame_lr = []
 frame_loss = []
 frame_type = []
+frame_percent = []
+# for i, l in enumerate(labels):
+#     frame_labels.extend([l]*len(vecrv))
+#     frame_lr.extend([lrate[i]]*len(vecrv))
+#     frame_loss.extend([loss[i]]*len(vecrv))
+#     frame_type.extend(['Respiration']*len(vecrv))
+# del i, l
+# for i, l in enumerate(labels):
+#     frame_labels.extend([l]*len(vechr))
+#     frame_lr.extend([lrate[i]]*len(vechr))
+#     frame_loss.extend([loss[i]]*len(vechr))
+#     frame_type.extend(['Heart Rate']*len(vechr))
+
 for i, l in enumerate(labels):
-    frame_labels.extend([l]*len(allrv_data[0]))
-    frame_lr.extend([lrate[i]]*len(allrv_data[0]))
-    frame_loss.extend([loss[i]]*len(allrv_data[0]))
-    frame_type.extend(['Respiration']*len(allrv_data[0]))
+    frame_labels.extend([l] * len(allrv_data[0]))
+    frame_lr.extend([lrate[i]] * len(allrv_data[0]))
+    frame_loss.extend([loss[i]] * len(allrv_data[0]))
+    # frame_percent.extend([percent[i]] * len(allrv_data[0]))
+    frame_type.extend(['Respiration'] * len(allrv_data[0]))
 del i, l
 for i, l in enumerate(labels):
-    frame_labels.extend([l]*len(allhr_data[0]))
-    frame_lr.extend([lrate[i]]*len(allhr_data[0]))
-    frame_loss.extend([loss[i]]*len(allhr_data[0]))
-    frame_type.extend(['Heart Rate']*len(allhr_data[0]))
+    frame_labels.extend([l] * len(allhr_data[0]))
+    frame_lr.extend([lrate[i]] * len(allhr_data[0]))
+    frame_loss.extend([loss[i]] * len(allhr_data[0]))
+    # frame_percent.extend([percent[i]] * len(allrv_data[0]))
+    frame_type.extend(['Heart Rate'] * len(allhr_data[0]))
 
 
 df_data = {'Pearson Correlation': vec, 'Model Architectures': frame_labels, 'Learning Rate': frame_lr, 'Lambda RV': frame_loss,
            'Physio Type': frame_type}
+# df_data = {'Pearson Correlation': vec, 'Model Architectures': frame_labels, 'Learning Rate': frame_lr, 'Lambda RV': frame_loss,
+#            'Physio Type': frame_type, 'Missing %': frame_percent}
 df = pd.DataFrame(data=df_data)
 
-sn.set(style="whitegrid")
+# sn.set(style="whitegrid")
 
-# plt.rcParams["figure.figsize"] = (15,5)
-plt.rcParams["figure.figsize"] = (8,4)
-# plt.ylim(-0.5, 1)
+plt.rcParams["figure.figsize"] = (15,10)
+# plt.rcParams["figure.figsize"] = (8,4)
+plt.ylim(-0.5, 1)
 SMALL_SIZE = 10
 MEDIUM_SIZE = 14
 BIGGER_SIZE = 17
@@ -96,26 +116,35 @@ plt.rc('ytick', labelsize=MEDIUM_SIZE, color='black')    # fontsize of the tick 
 # sn.stripplot(x='Model Architectures', y='Pearson Correlation', data=df,
 #                    palette=["gray"])
 
+# list_loss = ['l1_0', 'l1_0.0001', 'l1_0.3', 'l1_0.5', 'l1_0.7', 'l1_0.9999', 'l1_1']
 # df = df[~df['Lambda RV'].isin(list_loss)] did not work
 #
-# ax1 = sn.swarmplot(x='Lambda RV', y='Pearson Correlation', data=df, split=True, hue='Physio Type',
-#                     size=4, dodge=True)
+ax1 = sn.swarmplot(x='Lambda RV', y='Pearson Correlation', data=df, split=True, hue='Physio Type', palette=['#0D5901', '#B3000C'],
+                    size=4, dodge=True)
 #
 # handles, labels = ax1.get_legend_handles_labels()
+# df_hr = df[df['Physio Type']=='Heart Rate']
+# ax = sn.lineplot(x='Missing %', y='Pearson Correlation', data=df_hr, style='Lambda RV', hue='Lambda RV',
+#                  estimator=np.median, markers=True, ci=75, palette=['#0D5901', '#B3000C'])
+# ax = sn.lineplot(x='Missing %', y='Pearson Correlation', data=df_hr, style='Lambda RV',
+#                  estimator=np.median, markers=True, ci=75, palette=['#0D5901', '#B3000C'])
+# handles, labels = ax.get_legend_handles_labels()
 # #
-ax = sn.lineplot(x='Lambda RV', y='Pearson Correlation', data=df, style='Physio Type', hue='Model Architectures', estimator=np.median, markers=True, ci='sd')
-handles, labels = ax.get_legend_handles_labels()
-# #
-
+# plt.xticks(np.arange(len(percent)), labels=percent, rotation='horizontal', fontsize=12)
+plt.yticks(fontsize=12)
+plt.ylabel('M ' + ' Pearson Correlation')
+# plt.xlabel(r'${\lambda}_{RV}$')
+plt.xlabel('Missing Data by %')
 # ['dodgerblue', 'palevioletred', 'mediumseagreen', 'gold', 'slateblue']
 
 # ax.grid(color='gray', linestyle='-', linewidth=.8)
-plt.legend(loc='lower left', ncol=10, handles=handles, bbox_to_anchor=(0.0, 1.00))
+# plt.legend(loc='lower left', ncol=10, handles=handles, bbox_to_anchor=(0.0, 1.00))
+plt.legend(loc='lower left', ncol=10, bbox_to_anchor=(0.0, 1.00))
 # ax.set_title('RV')
-
+plt.grid()
 # loc = plticker.MultipleLocator(base=0.1) # this locator puts ticks at regular intervals
 # ax.yaxis.set_major_locator(loc)
 plt.show()
-# plt.savefig('/home/bayrakrg/neurdy/pycharm/multi-task-physio/ISBI2020/figures/contribution.png', bbox_inches='tight', dpi=300)
+# plt.savefig('/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/figures/lambda.png', bbox_inches='tight', dpi=300)
 # plt.show()
 print()

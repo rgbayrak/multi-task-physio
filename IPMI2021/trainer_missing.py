@@ -19,6 +19,8 @@ def train(model, device, train_loader, optim, opt):
         input = sample['roi']
         target_rv = sample['rv']
         target_hr = sample['hr']
+        hr_mask, rv_mask = sample['hr_mask'], sample['rv_mask']
+        hr_mask, rv_mask = hr_mask.to(device), rv_mask.to(device)
         target_rv = target_rv.type(torch.FloatTensor)
         target_hr = target_hr.type(torch.FloatTensor)
         input, target_rv, target_hr = input.to(device), target_rv.to(device), target_hr.to(device)
@@ -26,15 +28,20 @@ def train(model, device, train_loader, optim, opt):
         output_rv, output_hr = model(input)
         # output_rv, output_hr, t_att, s_att = model(input)
 
+        loss = 0
+        if torch.sum(rv_mask) != 0:
+            loss_rv = pearsonr(output_rv[rv_mask], target_rv[rv_mask])
+            loss += opt.l1 * loss_rv
+            total_loss_rv += loss_rv.item()
+        if torch.sum(hr_mask) != 0:
+            loss_hr = pearsonr(output_hr[hr_mask], target_hr[hr_mask])
+            loss += opt.l2 * loss_hr
+            total_loss_hr += loss_hr.item()
 
-        loss_rv = pearsonr(output_rv, target_rv)
-        loss = opt.l1 * loss_rv
-        total_loss_rv += loss_rv.item()
 
-        loss_hr = pearsonr(output_hr, target_hr)
-        loss += opt.l2 * loss_hr
-        total_loss_hr += loss_hr.item()
-
+        # print('loss_rv: {}'.format(loss_rv))
+        # print('loss_hr: {}'.format(loss_hr))
+        # print('loss: {}'.format(loss))
         loss.backward()
         optim.step()
 
@@ -75,13 +82,20 @@ def test(model, device, test_loader, opt):
             target_hr = sample['hr']
             # schaefer_paths = sample['schaefer']
 
+            hr_mask, rv_mask = sample['hr_mask'], sample['rv_mask']
+            hr_mask, rv_mask = hr_mask.to(device), rv_mask.to(device)
+
             input, target_rv, target_hr = input.to(device), target_rv.to(device), target_hr.to(device)
 
-            # output_rv, output_hr = model(input)
-            output_rv, output_hr, t_att, s_att = model(input)
-            loss_rv = pearsonr(output_rv, target_rv)
-            loss_hr = pearsonr(output_hr, target_hr)
-            loss = opt.l1 * loss_rv + opt.l2 * loss_hr
+            output_rv, output_hr = model(input)
+            # output_rv, output_hr, t_att, s_att = model(input)
+            loss = 0
+            if torch.sum(rv_mask) != 0:
+                loss_rv = pearsonr(output_rv[rv_mask], target_rv[rv_mask])
+                loss += opt.l1 * loss_rv
+            if torch.sum(hr_mask) != 0:
+                loss_hr = pearsonr(output_hr[hr_mask], target_hr[hr_mask])
+                loss += opt.l2 * loss_hr
 
             # running average
             # total_loss_rv += loss_rv.item()
@@ -100,12 +114,12 @@ def test(model, device, test_loader, opt):
             target_rvs.append(target_rv.squeeze())
             target_hrs.append(target_hr.squeeze())
 
-            t_att = t_att.detach().cpu().numpy()
-            s_att = s_att.detach().cpu().numpy()
-            temp_att.append(t_att.squeeze())
-            spat_att.append(s_att.squeeze())
+            # t_att = t_att.detach().cpu().numpy()
+            # s_att = s_att.detach().cpu().numpy()
+            # temp_att.append(t_att.squeeze())
+            # spat_att.append(s_att.squeeze())
 
         avg_loss = total_loss / len(test_loader)
 
-    # return avg_loss, target_rvs, target_hrs, pred_rvs, pred_hrs
-    return avg_loss, target_rvs, target_hrs, pred_rvs, pred_hrs, temp_att, spat_att
+    return avg_loss, target_rvs, target_hrs, pred_rvs, pred_hrs
+    # return avg_loss, target_rvs, target_hrs, pred_rvs, pred_hrs, temp_att, spat_att

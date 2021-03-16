@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import torch
 from scipy.io import loadmat
+import pickle
 from skimage import io, transform
 
 
@@ -25,9 +26,9 @@ def get_roi_len(dirs):
 def get_sub(path):
     fp = open(path, 'r')
     sublines = fp.readlines()
+    roi_fold = []
     hr_fold = []
     rv_fold = []
-    roi_fold = []
 
     for subline in sublines:
         roi_fold.append(subline)
@@ -36,8 +37,12 @@ def get_sub(path):
     fp.close()
     return roi_fold, hr_fold, rv_fold
 
-
-def get_dictionary(fold):
+def get_dictionary(opt):
+    if opt.mode == 'train':
+        fold = opt.train_fold
+    elif opt.mode == 'test':
+        fold = opt.test_fold
+    percent = opt.percent
     roi_path = os.path.join("/bigdata/HCP_1200/power+xifra/resting_min+prepro/bpf-ds/")
     hr_path = "/data/HR_filt_ds/"
     rv_path = "/data/RV_filt_ds/"
@@ -59,7 +64,6 @@ def get_dictionary(fold):
         subject_id = subdir_parts[1]
         # print("{}".format(subject_id))
 
-        # clust_list = os.listdir(roi_path)
         clust_list = ['schaefer', 'tractseg', 'tian', 'aan']
         if subject_id not in data:
             data[subject_id] = {clust_list[0]: [roi_path + clust_list[0] + '/' + d.rstrip('\n')],
@@ -94,7 +98,7 @@ def get_dictionary(fold):
 
         scan_order = []
         for path in paths:
-            scan_order.append(path.lstrip('/bigdata/HCP_1200/power+xifra/resting_min+prepro/schaefer/bpf-ds/rois_').rstrip('.mat'))
+            scan_order.append(path.replace('/bigdata/HCP_1200/power+xifra/resting_min+prepro/bpf-ds/schaefer/rois_', '').replace('.mat', ''))
 
         for k in data[subj]:
             new_paths = []
@@ -105,8 +109,20 @@ def get_dictionary(fold):
                         break
             data[subj][k] = new_paths
 
+    # remove subject physio to simulate missing data
+    num_sub = int(np.round(len(data)*percent))
+    subs = list(data.keys())[:num_sub]
+    missing_sub_log = "/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/logs/" + opt.uni_id
+    if not os.path.isdir(missing_sub_log):
+        os.makedirs(missing_sub_log)
+    with open(missing_sub_log + "/missing-physio-" + str(opt.percent) + "-percent.txt", "w") as fp:  # Pickling
+        fp.write('\n'.join(sorted(subs)))
+    for sub in subs:
+        data[sub].pop('HR_filt_ds')
+        # data[sub].pop('RV_filt_ds')
+
     # print(list(data.keys())) # subject_ids
-    return data
+    return data, num_sub
 
 
 class data_to_tensor():
@@ -129,7 +145,7 @@ class data_to_tensor():
 
         # make sure in get_item that we see all data by
         for subj in self.data.keys():
-            for i, val in enumerate(self.data[subj]['HR_filt_ds']):
+            for i, val in enumerate(self.data[subj]['schaefer']):
                 self.idx_list.append([subj, i])
 
         self.keys = list(self.data.keys())  # so, we just do it once
@@ -140,61 +156,86 @@ class data_to_tensor():
         return len(self.idx_list)
 
     def __getitem__(self, idx):
+        # create a dictionary that will have keys depending on the availability of input data
+        sample = {}
+
         # load on the fly
         single = self.data[self.idx_list[idx][0]]  # passing the subject string to get the other dictionary
         single_paths = self.paths[self.idx_list[idx][0]]
-        hr_path = single_paths['HR_filt_ds'][self.idx_list[idx][1]]
+
+        # ROI block
+        schaefer_path = single_paths['schaefer'][self.idx_list[idx][1]]
         schaefer = single[self.roi_list[0]][self.idx_list[idx][1]]['roi_dat'][0:600, :]
         tractseg = single[self.roi_list[1]][self.idx_list[idx][1]]['roi_dat'][0:600, :]
         tian = single[self.roi_list[2]][self.idx_list[idx][1]]['roi_dat'][0:600, :]
         aan = single[self.roi_list[3]][self.idx_list[idx][1]]['roi_dat'][0:600, :]
-        hr = single['HR_filt_ds'][self.idx_list[idx][1]]['hr_filt_ds'][0:600, :]  # trimmed
-        rv = single['RV_filt_ds'][self.idx_list[idx][1]]['rv_filt_ds'][0:600, :]  # trimmed
 
-        # # TO DO multi-head
-
-        hr_norm = (hr - hr.mean(axis=0)) / hr.std(axis=0)  # z-score normalization
-        rv_norm = (rv - rv.mean(axis=0)) / rv.std(axis=0)  # z-score normalization
         schaefer_norm = (schaefer - schaefer.mean(axis=0)) / schaefer.std(axis=0)  # z-score normalization
         tractseg_norm = (tractseg - tractseg.mean(axis=0)) / tractseg.std(axis=0)  # z-score normalization
         tian_norm = (tian - tian.mean(axis=0)) / tian.std(axis=0)  # z-score normalization
         aan_norm = (aan - aan.mean(axis=0)) / aan.std(axis=0)  # z-score normalization
+
+        # add all up
         roi_norm = np.hstack((schaefer_norm, tractseg_norm, tian_norm, aan_norm))
 
-        # plt.subplot(611)
-        # plt.plot(rv_norm, 'b')
-        # plt.legend(['rv'])
-        # plt.subplot(612)
-        # plt.plot(hr_norm, 'b')
-        # plt.legend(['hr'])
-        # plt.subplot(613)
-        # plt.plot(schaefer_norm[:, :15])
-        # plt.legend(['schaefer'])
-        # plt.subplot(614)
-        # plt.plot(tractseg_norm[:, :15])
-        # plt.legend(['tractseg'])
-        # plt.subplot(615)
-        # plt.plot(tian_norm)
-        # plt.legend(['tian'])
-        # plt.subplot(616)
-        # plt.plot(aan_norm)
-        # plt.legend(['aan'])
+        # Physio block
+        if 'HR_filt_ds' in single:
+            hr = single['HR_filt_ds'][self.idx_list[idx][1]]['hr_filt_ds'][0:600, :]  # trimmed
+            hr_norm = (hr - hr.mean(axis=0)) / hr.std(axis=0)  # z-score normalization
+            hr_mask = 1
+        else:
+            hr_norm = np.zeros((600,))
+            hr_mask = 0
+
+        if 'RV_filt_ds' in single:
+            rv = single['RV_filt_ds'][self.idx_list[idx][1]]['rv_filt_ds'][0:600, :]  # trimmed
+            rv_norm = (rv - rv.mean(axis=0)) / rv.std(axis=0)  # z-score normalization
+            rv_mask = 1
+        else:
+            rv_norm = np.zeros((600,))
+            rv_mask = 0
+
+        # plt.subplot(911)
+        # plt.plot(roi_norm[:, 1], 'b')
+        # plt.subplot(912)
+        # plt.plot(roi_norm[:, 10], 'b')
+        # plt.subplot(913)
+        # plt.plot(roi_norm[:, 100], 'b')
+        # plt.subplot(914)
+        # plt.plot(roi_norm[:, 300], 'b')
+        # plt.subplot(915)
+        # plt.plot(roi_norm[:, 405], 'b')
+        # plt.subplot(916)
+        # plt.plot(roi_norm[:, 467], 'b')
+        # plt.subplot(917)
+        # plt.plot(roi_norm[:, 482], 'b')
+        # plt.subplot(918)
+        # plt.plot(roi_norm[:, 425], 'b')
+        # plt.subplot(919)
+        # plt.plot(roi_norm[:, 495], 'b')
         # plt.show()
 
         # swap axis because
         # numpy: W x C
         # torch: C X W
-        # roi_norm = roi_norm.transpose((1, 0))
-        hr_norm = hr_norm.squeeze()
-        rv_norm = rv_norm.squeeze()
+        roi_norm = roi_norm.transpose((1, 0))
+        sample['roi'] = roi_norm
 
-        sample = {'roi': roi_norm, 'hr': hr_norm, 'rv': rv_norm}
+        hr_norm = hr_norm.squeeze()
+        sample['hr'] = hr_norm
+        sample['hr_mask'] = np.array(hr_mask, dtype=np.bool)
+
+        rv_norm = rv_norm.squeeze()
+        sample['rv'] = rv_norm
+        sample['rv_mask'] = np.array(rv_mask, dtype=np.bool)
+
+        # sample = {'roi': roi_norm, 'hr': hr_norm, 'rv': rv_norm}
 
         # if self.transform:
         #     sample = self.transform(sample)
 
         sample = ToTensor()(sample)
-        sample['hr_path'] = hr_path
+        sample['schaefer'] = schaefer_path
         return sample
 
 
@@ -202,7 +243,9 @@ class ToTensor(object):
     """Convert ndarrays in sample to Tensors."""
 
     def __call__(self, sample):
-        roi, hr, rv = sample['roi'], sample['hr'], sample['rv']
 
-        return {'roi': torch.from_numpy(roi).type(torch.FloatTensor),
-                'hr': torch.from_numpy(hr).type(torch.FloatTensor), 'rv': torch.from_numpy(rv).type(torch.FloatTensor)}
+        sample['roi'] = torch.from_numpy(sample['roi']).type(torch.float32)
+        sample['hr'] = torch.from_numpy(sample['hr']).type(torch.float32)
+        sample['rv'] = torch.from_numpy(sample['rv']).type(torch.float32)
+
+        return sample

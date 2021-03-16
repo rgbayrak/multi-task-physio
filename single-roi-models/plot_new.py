@@ -10,7 +10,8 @@ import matplotlib.ticker as plticker
 warnings.filterwarnings("ignore")
 
 # folds together
-net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/single-roi-models/out/results_delete/'
+net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/single-roi-models/out/results/'
+# net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/transformer/out/'
 all_results = os.listdir(net_dir)
 
 # get the file names in the order that they were fed in to the networks
@@ -71,6 +72,17 @@ for j, z in enumerate(fname):
 rv_means = np.array([np.mean(ri) for ri in allrv_data])
 hr_means = np.array([np.mean(hi) for hi in allhr_data])
 
+# rv_medians = np.array([np.median(ri) for ri in allrv_data])
+# hr_medians = np.array([np.median(hi) for hi in allhr_data])
+#
+# rv_std = np.array([np.std(ri) for ri in allrv_data])
+# hr_std = np.array([np.std(hi) for hi in allhr_data])
+#
+# rv_iqr = np.subtract(*np.percentile(allrv_data, [75, 25]))
+# hr_iqr = np.subtract(*np.percentile(allhr_data, [75, 25]))
+# print(rv_iqr)
+# print(hr_iqr)
+
 # # sort based on rv
 # idx = rv_means.argsort()
 #
@@ -80,27 +92,22 @@ hr_means = np.array([np.mean(hi) for hi in allhr_data])
 # sort by validation loss
 # idx = np.array(val_loss).argsort()
 
-# sort based on the difference
+# # sort based on the difference
 # idx = (rv_means-hr_means).argsort()
 
-# sort based on percentage
-idx = np.array([int(x.strip('%')) for x in percent]).argsort()
 
 # val_loss = np.array(val_loss)[idx]
-rv_means = np.array(rv_means)[idx]
-hr_means = np.array(hr_means)[idx]
+# rv_means = np.array(rv_means)[idx]
+# hr_means = np.array(hr_means)[idx]
 # labels = np.array(labels)[idx]
 # ids = np.array(ids)[idx]
 # atlas = np.array(atlas)[idx]
-percent = np.array(percent)[idx]
 
 plt.scatter(np.arange(len(rv_means)), rv_means, marker='*', s=64, c='#0D5901')
 plt.scatter(np.arange(len(hr_means)), hr_means, marker='*', s=64, c='#B3000C')
-plt.plot(rv_means)
-plt.plot(hr_means)
-plt.xticks(np.arange(len(rv_means)), labels=labels, rotation='vertical', fontsize=6)
-plt.xticks(np.arange(len(rv_means)), labels=percent, rotation='vertical', fontsize=6)
-# plt.ylim([-0.01, 0.5])
+# plt.plot(rv_means, c='#0D5901')
+# plt.plot(hr_means, c='#B3000C')
+plt.xticks(np.arange(len(rv_means)), labels=labels, rotation='horizontal', fontsize=9)
 plt.ylim([-0.01, 1])
 plt.ylabel(r'${\mu}$' + ' Pearson Correlation')
 plt.legend(['rv', 'hr'])

@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import csv
 import os
-
+import time
 
 
 # def print_network(net):
@@ -270,18 +270,18 @@ def main():
 
     parser.add_argument('--model', type=str, default='U-Net')
     parser.add_argument('--multi', type=str, default='both')
-    parser.add_argument('--uni_id', type=str, default='U-Net_all4_lr_0.001_l1_0.5')
+    parser.add_argument('--uni_id', type=str, default='U-Net_schaefertractsegtianaan_lr_0.000001_l1_0.5')
     parser.add_argument('--epoch', type=int, default=3000, help='number of epochs to train for, default=10')
-    parser.add_argument('--lr', type=float, default=0.000001, help='learning rate, default=0.0001')
+    parser.add_argument('--lr', type=float, default=0.00001, help='learning rate, default=0.0001')
     parser.add_argument('--l1', type=float, default=0.5, help='loss weighting for , default=0.0001')
     parser.add_argument('--l2', type=float, default=0.5, help='learning rate, default=0.0001')
-    parser.add_argument('--test_fold', default='test_fold_4.txt', help='test_fold_k')
-    parser.add_argument('--train_fold', default='train_fold_4.txt', help='train_fold_k')
+    parser.add_argument('--test_fold', default='test_fold_3.txt', help='test_fold_k')
+    parser.add_argument('--train_fold', default='train_fold_3.txt', help='train_fold_k')
     parser.add_argument('--val_split', type=float, default=0.15, help='percentage of the split')
 
     parser.add_argument('--out_dir', type=str, default='/home/bayrakrg/neurdy/pycharm/multi-task-physio/miccai_models/out/', help='Path to output directory')
     parser.add_argument('--roi_list', type=str, default=['schaefer', 'tractseg', 'tian', 'aan'], help='list of rois wanted to be included')
-    parser.add_argument('--mode', type=str, default='train', help='Determines whether to backpropagate or not')
+    parser.add_argument('--mode', type=str, default='test', help='Determines whether to backpropagate or not')
     parser.add_argument('--train_batch', type=int, default=32, help='Decides size of each training batch')
     parser.add_argument('--test_batch', type=int, default=1, help='Decides size of each val batch')
     parser.add_argument('--decay_rate', type=float, default=0.05, help='Rate at which the learning rate will be decayed')
@@ -305,4 +305,6 @@ def main():
 
 
 if __name__ == '__main__':
+    start_time = time.time()
     main()
+    print("--- %s seconds ---" % (time.time() - start_time))
