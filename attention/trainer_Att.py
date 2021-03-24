@@ -4,6 +4,7 @@ import scipy as sp
 import os
 import audtorch
 
+
 def train(model, device, train_loader, optim, opt):
     # training
     model.train()
@@ -11,8 +12,8 @@ def train(model, device, train_loader, optim, opt):
     total_loss = 0
     total_loss_rv = 0
     total_loss_hr = 0
-    preds = []
-    targets = []
+    temp_att = []
+    spat_att = []
 
     for batch_idx, sample in enumerate(train_loader):
 
@@ -23,9 +24,7 @@ def train(model, device, train_loader, optim, opt):
         target_hr = target_hr.type(torch.FloatTensor)
         input, target_rv, target_hr = input.to(device), target_rv.to(device), target_hr.to(device)
         optim.zero_grad()
-        output_rv, output_hr = model(input)
-        # output_rv, output_hr, t_att, s_att = model(input)
-
+        output_rv, output_hr, t_att, s_att = model(input)
 
         loss_rv = pearsonr(output_rv, target_rv)
         loss = opt.l1 * loss_rv
@@ -45,16 +44,21 @@ def train(model, device, train_loader, optim, opt):
     # convert torch to numpy array
     pred_rv = output_rv.detach().cpu().numpy()
     pred_hr = output_hr.detach().cpu().numpy()
-    # print(pred.shape)
+
     target_rv = target_rv.detach().cpu().numpy()
     target_hr = target_hr.detach().cpu().numpy()
-    # print(target.shape)
+
     avg_loss_rv = total_loss_rv / len(train_loader)
     avg_loss_hr = total_loss_hr / len(train_loader)
 
+    t_att = t_att.detach().cpu().numpy()
+    s_att = s_att.detach().cpu().numpy()
+    temp_att.append(t_att.squeeze())
+    spat_att.append(s_att.squeeze())
+
     avg_loss = total_loss / len(train_loader)
 
-    return avg_loss, avg_loss_rv, avg_loss_hr, target_rv, target_hr, pred_rv, pred_hr
+    return avg_loss, avg_loss_rv, avg_loss_hr, target_rv, target_hr, pred_rv, pred_hr, temp_att, spat_att
 
 
 def test(model, device, test_loader, opt):
@@ -84,14 +88,11 @@ def test(model, device, test_loader, opt):
             loss = opt.l1 * loss_rv + opt.l2 * loss_hr
 
             # running average
-            # total_loss_rv += loss_rv.item()
-            # total_loss_hr += loss_hr.item()
             total_loss += loss.item()  # .item gives you a floating point value instead of a tensor
 
             # convert torch to numpy array
             pred_rv = output_rv.detach().cpu().numpy()
             pred_hr = output_hr.detach().cpu().numpy()
-            # print(pred.shape)
             target_rv = target_rv.detach().cpu().numpy()
             target_hr = target_hr.detach().cpu().numpy()
 
@@ -107,5 +108,4 @@ def test(model, device, test_loader, opt):
 
         avg_loss = total_loss / len(test_loader)
 
-    # return avg_loss, target_rvs, target_hrs, pred_rvs, pred_hrs
     return avg_loss, target_rvs, target_hrs, pred_rvs, pred_hrs, temp_att, spat_att

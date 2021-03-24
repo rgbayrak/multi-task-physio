@@ -2,7 +2,8 @@ import torch
 import torchvision.transforms as transforms
 import argparse
 from torch.utils.data import DataLoader
-# from data_loader import *
+from torch.utils.tensorboard import SummaryWriter
+
 from data_loader_Att import *
 from trainer_Att import *
 from model_Att import *
@@ -29,7 +30,7 @@ def train_model(opt):
     # create fold specific dictionaries for train and validation split
     train_data, num_sub = get_dictionary(opt)
     keys = list(train_data.keys())
-    print(num_sub)
+    # print(num_sub)
 
     # calculate number of rois which becomes the channel
     chs = get_roi_len(opt.roi_list)
@@ -54,8 +55,6 @@ def train_model(opt):
     # load network
     if opt.model == 'Bi-LSTM':
         model = BidirectionalLSTM(chs, 2000, 1)
-    elif opt.model == 'LSTM-att':
-        model = BidirectionalLSTM(chs, 497, 1)
     else:
         print('Error!')
 
@@ -80,12 +79,30 @@ def train_model(opt):
         model = model.to(device)
 
     with tqdm(total=opt.epoch) as pbar:
+        # tensorboard logging starts here
+        writer = SummaryWriter(flush_secs=10)
+
         for epoch in range(1, opt.epoch + 1):
 
-            avg_loss, avg_loss_rv, avg_loss_hr, target_rv, target_hr, pred_rv, pred_hr = train(model, device, train_loader, optim, opt)
+            avg_loss, avg_loss_rv, avg_loss_hr, target_rv, target_hr, pred_rv, pred_hr, t_att, s_att = train(model, device, train_loader, optim, opt)
 
-            avg_val_loss, target_rvs, target_hrs, pred_rvs, pred_hrs = test(model, device, val_loader, opt)
-            # avg_val_loss, target_rvs, target_hrs, pred_rvs, pred_hrs, t_att, s_att = test(model, device, val_loader, opt)
+            writer.add_scalar('Loss/train_avg', avg_loss, epoch)
+            writer.add_scalar('Loss/train_rv', avg_loss_rv, epoch)
+            writer.add_scalar('Loss/train_hr', avg_loss_hr, epoch)
+
+            if epoch == 1:
+                s_att_img = np.expand_dims(np.array(s_att)[:, 1, :], axis=0)
+                t_att_img = np.expand_dims(np.array(t_att)[:, :, 1], axis=2)
+            else:
+                s_att_img = np.concatenate((s_att_img, np.expand_dims(np.array(s_att)[:, 1, :], axis=0)), axis=1)
+                t_att_img = np.concatenate((t_att_img, np.expand_dims(np.array(t_att)[:, :, 1], axis=2)), axis=-1)
+
+            writer.add_image('spatial', s_att_img, epoch)
+            writer.add_image('temporal', t_att_img, epoch)
+
+            avg_val_loss, target_rvs, target_hrs, pred_rvs, pred_hrs, t_att, s_att = test(model, device, val_loader, opt)
+
+            writer.add_scalar('Loss/val_avg', avg_val_loss, epoch)
 
             # # plot prediction vs output
             # plt.figure(figsize=(15.5, 5))
@@ -113,15 +130,13 @@ def train_model(opt):
             # plt.legend(['Prediction', 'Target'])
             # plt.show()
 
-
-
-            with open(train_loss_file, "a") as file:
-                file.write(str(avg_loss_hr))
-                file.write('\n')
-
-            with open(validate_loss_file, "a") as file:
-                file.write(str(avg_val_loss))
-                file.write('\n')
+            # with open(train_loss_file, "a") as file:
+            #     file.write(str(avg_loss_hr))
+            #     file.write('\n')
+            #
+            # with open(validate_loss_file, "a") as file:
+            #     file.write(str(avg_val_loss))
+            #     file.write('\n')
 
             # save model only if validation loss is lower than prev. saved model
             if avg_val_loss < min_loss:
@@ -152,6 +167,8 @@ def train_model(opt):
                 "Epoch {}  \t Avg. Training >> Loss: {:.4f} \t Loss RV: {:.4f} \t Loss HR: {:.4f} \t Avg. Val. Loss: {:.4f}".format(epoch, avg_loss, avg_loss_rv, avg_loss_hr, avg_val_loss))
             pbar.update(1)
 
+        # tensorboard logging ends here
+        writer.close()
 
 def test_model(opt):
     # create fold specific dictionaries
@@ -170,8 +187,6 @@ def test_model(opt):
     # the network
     if opt.model == 'Bi-LSTM':
         model = BidirectionalLSTM(chs, 2000, 1)
-    elif opt.model == 'LSTM-att':
-        model = BidirectionalLSTM(chs, 497, 1)
     else:
         print('Error!')
 
@@ -289,8 +304,8 @@ def main():
     # pass in command line arguments
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--model', type=str, default='LSTM-att')
-    parser.add_argument('--uni_id', type=str, default='LSTM-att_schaefertractsegtianaan_lr_0.001_l1_0.5_att497')
+    parser.add_argument('--model', type=str, default='Bi-LSTM')
+    parser.add_argument('--uni_id', type=str, default='Bi-LSTM-att_schaefertractsegtianaan_lr_0.001_l1_0.5')
     parser.add_argument('--epoch', type=int, default=999, help='number of epochs to train for, default=10')
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate, default=0.0001')
     parser.add_argument('--l1', type=float, default=0.5, help='loss weighting for , default=0.0001')
@@ -299,9 +314,9 @@ def main():
     parser.add_argument('--train_fold', default='train_fold_0.txt', help='train_fold_k')
     parser.add_argument('--val_split', type=float, default=0.15, help='percentage of the split')
 
-    parser.add_argument('--out_dir', type=str, default='/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/out-att/', help='Path to output directory')
+    parser.add_argument('--out_dir', type=str, default='/home/bayrakrg/neurdy/pycharm/multi-task-physio/attention/out-att/', help='Path to output directory')
     parser.add_argument('--roi_list', type=str, default=['schaefer', 'tractseg', 'tian', 'aan'], help='list of rois wanted to be included')
-    parser.add_argument('--mode', type=str, default='test', help='Determines whether to backpropagate or not')
+    parser.add_argument('--mode', type=str, default='train', help='Determines whether to backpropagate or not')
     parser.add_argument('--train_batch', type=int, default=16, help='Decides size of each training batch')
     parser.add_argument('--test_batch', type=int, default=1, help='Decides size of each val batch')
     parser.add_argument('--decay_rate', type=float, default=0.5, help='Rate at which the learning rate will be decayed')

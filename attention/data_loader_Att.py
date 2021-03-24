@@ -42,7 +42,7 @@ def get_dictionary(opt):
     elif opt.mode == 'test':
         fold = opt.test_fold
 
-    num_sub = None
+    num_sub = 0
 
     roi_path = os.path.join("/bigdata/HCP_1200/power+xifra/resting_min+prepro/bpf-ds/")
     hr_path = "/data/HR_filt_ds/"
