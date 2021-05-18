@@ -186,8 +186,8 @@ def test_model(opt):
 
     model = model.to(device)
 
-    # avg_loss, target_rvs, target_hrs, pred_rvs, pred_hrs = test(model, device, test_loader, opt)
-    avg_loss, target_rvs, target_hrs, pred_rvs, pred_hrs, t_att, s_att = test(model, device, test_loader, opt)
+    avg_loss, target_rvs, target_hrs, pred_rvs, pred_hrs = test(model, device, test_loader, opt)
+    # avg_loss, target_rvs, target_hrs, pred_rvs, pred_hrs, t_att, s_att = test(model, device, test_loader, opt)
     #
     # look at temporal and spatial attention maps
     # t_att2 = np.array(t_att)    # print(list(data.keys())) # subject_ids
@@ -199,14 +199,14 @@ def test_model(opt):
     # fnt = '/home/bayrakrg/Desktop/figures/' + opt.uni_id + '/' + opt.fold + '/t_att3.npy'
     # np.save(fnt, t_att3)
 
-    s_att2 = np.array(s_att)
-    plt.imshow(s_att2)
-    plt.show()
-    s_att3 = np.expand_dims(np.sum(s_att2, axis=0), axis=0)
-    plt.imshow(s_att3)
-    plt.show()
-    fns = '/home/bayrakrg/Desktop/figures/' + opt.uni_id + '/' + opt.fold + '/s_att3.npy'
-    np.save(fns, s_att3)
+    # s_att2 = np.array(s_att)
+    # plt.imshow(s_att2)
+    # plt.show()
+    # s_att3 = np.expand_dims(np.sum(s_att2, axis=0), axis=0)
+    # plt.imshow(s_att3)
+    # plt.show()
+    # fns = '/home/bayrakrg/Desktop/figures/' + opt.uni_id + '/' + opt.fold + '/s_att3.npy'
+    # np.save(fns, s_att3)
 
     # # plot prediction vs output
     # plt.figure(figsize=(15.5, 5))
@@ -237,8 +237,8 @@ def test_model(opt):
 
     # Save statistics
     prediction_file = '{}results/{}/test/{}/pred_scans.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
+    # fold_file = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/task_files/' + opt.test_fold
     fold_file = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/k_fold_files/' + opt.test_fold
-    # fold_file = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/social_files/' + opt.test_fold
 
     rvp = '{}/results/{}/test/{}/rv_pred.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
     rvt = '{}/results/{}/test/{}/rv_target.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
@@ -289,8 +289,8 @@ def main():
     # pass in command line arguments
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--model', type=str, default='LSTM-att')
-    parser.add_argument('--uni_id', type=str, default='LSTM-att_schaefertractsegtianaan_lr_0.001_l1_0.5_att497')
+    parser.add_argument('--model', type=str, default='Bi-LSTM')
+    parser.add_argument('--uni_id', type=str, default='Bi-LSTM_schaefertractsegtian_lr_0.001_l1_0.5')
     parser.add_argument('--epoch', type=int, default=999, help='number of epochs to train for, default=10')
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate, default=0.0001')
     parser.add_argument('--l1', type=float, default=0.5, help='loss weighting for , default=0.0001')
@@ -299,9 +299,9 @@ def main():
     parser.add_argument('--train_fold', default='train_fold_0.txt', help='train_fold_k')
     parser.add_argument('--val_split', type=float, default=0.15, help='percentage of the split')
 
-    parser.add_argument('--out_dir', type=str, default='/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/out-att/', help='Path to output directory')
+    parser.add_argument('--out_dir', type=str, default='/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/out/', help='Path to output directory')
     parser.add_argument('--roi_list', type=str, default=['schaefer', 'tractseg', 'tian', 'aan'], help='list of rois wanted to be included')
-    parser.add_argument('--mode', type=str, default='test', help='Determines whether to backpropagate or not')
+    parser.add_argument('--mode', type=str, default='train', help='Determines whether to backpropagate or not')
     parser.add_argument('--train_batch', type=int, default=16, help='Decides size of each training batch')
     parser.add_argument('--test_batch', type=int, default=1, help='Decides size of each val batch')
     parser.add_argument('--decay_rate', type=float, default=0.5, help='Rate at which the learning rate will be decayed')

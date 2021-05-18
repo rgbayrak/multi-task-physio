@@ -97,7 +97,7 @@ def train_model(opt):
                 s_att_img = np.concatenate((s_att_img, np.expand_dims(np.array(s_att)[:, 1, :], axis=0)), axis=1)
                 t_att_img = np.concatenate((t_att_img, np.expand_dims(np.array(t_att)[:, :, 1], axis=2)), axis=-1)
 
-            writer.add_image('spatial', s_att_img, epoch)
+            writer.add_image('spatial', s_att_img.transpose((0, 2, 1)), epoch)
             writer.add_image('temporal', t_att_img, epoch)
 
             avg_val_loss, target_rvs, target_hrs, pred_rvs, pred_hrs, t_att, s_att = test(model, device, val_loader, opt)
@@ -310,8 +310,8 @@ def main():
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate, default=0.0001')
     parser.add_argument('--l1', type=float, default=0.5, help='loss weighting for , default=0.0001')
     parser.add_argument('--l2', type=float, default=0.5, help='learning rate, default=0.0001')
-    parser.add_argument('--test_fold', default='test_fold_0.txt', help='test_fold_k')
-    parser.add_argument('--train_fold', default='train_fold_0.txt', help='train_fold_k')
+    parser.add_argument('--test_fold', default='test_fold_4.txt', help='test_fold_k')
+    parser.add_argument('--train_fold', default='train_fold_4.txt', help='train_fold_k')
     parser.add_argument('--val_split', type=float, default=0.15, help='percentage of the split')
 
     parser.add_argument('--out_dir', type=str, default='/home/bayrakrg/neurdy/pycharm/multi-task-physio/attention/out-att/', help='Path to output directory')

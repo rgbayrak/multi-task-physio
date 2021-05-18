@@ -5,8 +5,8 @@ import warnings
 import seaborn as sn
 import pandas as pd
 from scipy.io import loadmat
-out_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/out_lemon/lemon-results/Bi-LSTM_all4_lr_0.001_l1_0.5/test/test_fold_0-old/'
-files = ['rv_pred.csv', 'rv_target.csv']
+out_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/out/results/Bi-LSTM_schaefertractsegtianaan_lr_0.001_l1_0.5/test/no_wm/'
+files = ['rv_pred.csv', 'rv_target.csv', 'hr_pred.csv', 'hr_target.csv']
 # id_corr = loadmat('/home/bayrakrg/neurdy/pycharm/neuroimg2020/RV/out/results/cnn_findlab90/id_corr.mat')
 id_corr = 'pred_scans'
 
@@ -25,20 +25,20 @@ for file in files:
         # tmp = (np.array(data[j][0]) - np.array(data[j][0]).mean(axis=0)) / np.array(data[j][0]).std(axis=0)  # z-score normalization
         all_data.append(d)
 
-fig, axs = plt.subplots(7, 1, figsize=(20,8))
+fig, axs = plt.subplots(2, 1, figsize=(20,8))
 
-axs[0].plot(all_data[0][0], label='r = -0.0326')
-axs[0].plot(all_data[7][0], linestyle='--')
-axs[1].plot(all_data[1][0], label='r = 0.4635')
-axs[1].plot(all_data[8][0], linestyle='--')
-axs[2].plot(all_data[2][0], label='r = -0.2310')
-axs[2].plot(all_data[9][0], linestyle='--')
-axs[3].plot(all_data[3][0], label='r = 0.4325')
-axs[3].plot(all_data[10][0], linestyle='--')
-axs[4].plot(all_data[4][0], label='r = 0.0771')
-axs[4].plot(all_data[11][0], linestyle='--')
-axs[5].plot(all_data[5][0], label='r = 0.0028')
-axs[5].plot(all_data[12][0], linestyle='--')
+# axs[0].plot(all_data[0][0], label='r = -0.0326')
+# axs[0].plot(all_data[7][0], linestyle='--')
+# axs[1].plot(all_data[1][0], label='r = 0.4635')
+# axs[1].plot(all_data[8][0], linestyle='--')
+# axs[2].plot(all_data[2][0], label='r = -0.2310')
+# axs[2].plot(all_data[9][0], linestyle='--')
+# axs[3].plot(all_data[3][0], label='r = 0.4325')
+# axs[3].plot(all_data[10][0], linestyle='--')
+# axs[4].plot(all_data[4][0], label='r = 0.0771')
+# axs[4].plot(all_data[11][0], linestyle='--')
+# axs[5].plot(all_data[5][0], label='r = 0.0028')
+# axs[5].plot(all_data[12][0], linestyle='--')
 
 axs[0].tick_params(
     axis='x',          # changes apply to the x-axis
