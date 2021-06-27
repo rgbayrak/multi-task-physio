@@ -27,19 +27,19 @@ def train_model(opt):
     kwargs = {'num_workers': 2, 'pin_memory': True} if torch.cuda.is_available() else {}
 
     # create fold specific dictionaries for train and validation split
-    train_data, num_sub = get_dictionary(opt)
+    train_data = get_dictionary(opt)
     keys = list(train_data.keys())
-    print(num_sub)
 
     # calculate number of rois which becomes the channel
-    chs = get_roi_len(opt.roi_list)
+    # chs = get_roi_len(opt.roi_list)
+    chs = 477
 
     # assign random validation remove them from train data
     # num sub is number of subjects with missing physio
     val_split = round(len(train_data) * opt.val_split)
     val_data = {}
     for i in range(val_split):
-        idx = random.randint(num_sub, len(keys) - 1)
+        idx = random.randint(0, len(keys) - 1)
         val_data[keys[idx]] = train_data[keys[idx]]
         del train_data[keys[idx]]
         del keys[idx]
@@ -155,9 +155,10 @@ def train_model(opt):
 
 def test_model(opt):
     # create fold specific dictionaries
-    test_data, num_sub = get_dictionary(opt)
+    test_data = get_dictionary(opt)
     # get number of  total channels
-    chs = get_roi_len(opt.roi_list)
+    # chs = get_roi_len(opt.roi_list)
+    chs = 477
 
     # device CPU or GPU
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -301,7 +302,7 @@ def main():
 
     parser.add_argument('--out_dir', type=str, default='/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/out/', help='Path to output directory')
     parser.add_argument('--roi_list', type=str, default=['schaefer', 'tractseg', 'tian', 'aan'], help='list of rois wanted to be included')
-    parser.add_argument('--mode', type=str, default='train', help='Determines whether to backpropagate or not')
+    parser.add_argument('--mode', type=str, default='test', help='Determines whether to backpropagate or not')
     parser.add_argument('--train_batch', type=int, default=16, help='Decides size of each training batch')
     parser.add_argument('--test_batch', type=int, default=1, help='Decides size of each val batch')
     parser.add_argument('--decay_rate', type=float, default=0.5, help='Rate at which the learning rate will be decayed')

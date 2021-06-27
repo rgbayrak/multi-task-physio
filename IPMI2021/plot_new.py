@@ -58,7 +58,8 @@ frame_labels = []
 frame_lr = []
 frame_loss = []
 frame_type = []
-frame_percent = []
+# frame_percent = []
+frame_roi = []
 # for i, l in enumerate(labels):
 #     frame_labels.extend([l]*len(vecrv))
 #     frame_lr.extend([lrate[i]]*len(vecrv))
@@ -77,6 +78,7 @@ for i, l in enumerate(labels):
     frame_loss.extend([loss[i]] * len(allrv_data[0]))
     # frame_percent.extend([percent[i]] * len(allrv_data[0]))
     frame_type.extend(['Respiration'] * len(allrv_data[0]))
+    frame_roi.extend([rois[i]] * len(allrv_data[0]))
 del i, l
 for i, l in enumerate(labels):
     frame_labels.extend([l] * len(allhr_data[0]))
@@ -84,10 +86,12 @@ for i, l in enumerate(labels):
     frame_loss.extend([loss[i]] * len(allhr_data[0]))
     # frame_percent.extend([percent[i]] * len(allrv_data[0]))
     frame_type.extend(['Heart Rate'] * len(allhr_data[0]))
+    frame_roi.extend([rois[i]] * len(allhr_data[0]))
+
 
 
 df_data = {'Pearson Correlation': vec, 'Model Architectures': frame_labels, 'Learning Rate': frame_lr, 'Lambda RV': frame_loss,
-           'Physio Type': frame_type}
+           'Physio Type': frame_type, 'Input': frame_roi}
 # df_data = {'Pearson Correlation': vec, 'Model Architectures': frame_labels, 'Learning Rate': frame_lr, 'Lambda RV': frame_loss,
 #            'Physio Type': frame_type, 'Missing %': frame_percent}
 df = pd.DataFrame(data=df_data)
@@ -119,8 +123,8 @@ plt.rc('ytick', labelsize=MEDIUM_SIZE, color='black')    # fontsize of the tick 
 # list_loss = ['l1_0', 'l1_0.0001', 'l1_0.3', 'l1_0.5', 'l1_0.7', 'l1_0.9999', 'l1_1']
 # df = df[~df['Lambda RV'].isin(list_loss)] did not work
 #
-ax1 = sn.swarmplot(x='Lambda RV', y='Pearson Correlation', data=df, split=True, hue='Physio Type', palette=['#0D5901', '#B3000C'],
-                    size=4, dodge=True)
+ax1 = sn.swarmplot(x='Input', y='Pearson Correlation', data=df, split=True, hue='Physio Type', palette=['#0D5901', '#B3000C'],
+                    size=3, dodge=True)
 #
 # handles, labels = ax1.get_legend_handles_labels()
 # df_hr = df[df['Physio Type']=='Heart Rate']
@@ -134,7 +138,7 @@ ax1 = sn.swarmplot(x='Lambda RV', y='Pearson Correlation', data=df, split=True, 
 plt.yticks(fontsize=12)
 plt.ylabel('M ' + ' Pearson Correlation')
 # plt.xlabel(r'${\lambda}_{RV}$')
-plt.xlabel('Missing Data by %')
+# plt.xlabel('Missing Data by %')
 # ['dodgerblue', 'palevioletred', 'mediumseagreen', 'gold', 'slateblue']
 
 # ax.grid(color='gray', linestyle='-', linewidth=.8)

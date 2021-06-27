@@ -10,7 +10,7 @@ import matplotlib.ticker as plticker
 warnings.filterwarnings("ignore")
 
 # folds together
-net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/out/results/'
+net_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/out/results-task/'
 results_dir = os.listdir(net_dir)
 all_results = sorted(results_dir, reverse=False)
 
@@ -54,12 +54,12 @@ for folder in all_results:
 
 
 def set_axis_style(ax, labels):
-    ax.xaxis.set_tick_params(direction='out')
+    ax.xaxis.set_tick_params(direction='out', rotation=30)
     ax.xaxis.set_ticks_position('bottom')
     ax.set_xticks(np.arange(1, len(labels) + 1))
     ax.set_xticklabels(labels)
     ax.set_xlim(0.25, len(labels) + 0.75)
-    ax.set_xlabel('Task fMRI Paradigms')
+    # ax.set_xlabel('Task fMRI Paradigms')
 
 fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(9, 4), sharey=False)
 
@@ -67,6 +67,7 @@ ax1.set_title('RV prediction accuracy')
 ax1.set_ylabel('Pearson Correlation')
 other_parts = ax1.violinplot(allrv_data, showmeans=False, showmedians=True,
         showextrema=False)
+plt.xticks(rotation=30)
 
 # for pc in other_parts['bodies']:
 #     pc.set_facecolor('#BC544B')
@@ -77,9 +78,11 @@ ax2.set_title('HR prediction accuracy')
 parts = ax2.violinplot(
         allhr_data, showmeans=False, showmedians=True,
         showextrema=False)
+plt.xticks(rotation=30)
 
 for ax in [ax1, ax2]:
     set_axis_style(ax, task)
+
 
 # for pc in parts['bodies']:
 #     pc.set_facecolor('#5DBB63')

@@ -64,35 +64,55 @@ def get_dictionary(opt):
     # type(rv['rv_filt_ds']), rv['rv_filt_ds'].shape
     # type(rv['tax']), rv['tax'].shape
 
-    data = {}
-    for i, d in enumerate(roi_fold):
-        subdir_parts = roi_fold[i].rstrip(".mat").split('_')
-        subject_id = subdir_parts[1]
-        # print("{}".format(subject_id))
+    list_of_tasks = ['EMOTION', 'GAMBLING', 'LANGUAGE', 'MOTOR', 'RELATIONAL', 'SOCIAL', 'WM']
+    clust_list = ['schaefer', 'tractseg', 'tian', 'aan']
+    path_to_good_lists = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/noverlap_scans'
 
-        clust_list = ['schaefer', 'tractseg', 'tian', 'aan']
-        if subject_id not in data:
-            data[subject_id] = {clust_list[0]: [roi_path + clust_list[0] + '/' + d.rstrip('\n')],
-                                clust_list[1]: [roi_path + clust_list[1] + '/' + d.rstrip('\n')],
-                                clust_list[2]: [roi_path + clust_list[2] + '/' + d.rstrip('\n')],
-                                clust_list[3]: [roi_path + clust_list[3] + '/' + d.rstrip('\n')],
-                                'HR_filt_ds': [hr_path + hr_fold[i].rstrip('\n')],
-                                'RV_filt_ds': [rv_path + rv_fold[i].rstrip('\n')]}
-        else:
-            if clust_list[0] and clust_list[1] and clust_list[2] and clust_list[3] not in data[subject_id]:
-                data[subject_id][clust_list[0]] = [roi_path + clust_list[0] + '/' + d.rstrip('\n')]
-                data[subject_id][clust_list[1]] = [roi_path + clust_list[1] + '/' + d.rstrip('\n')]
-                data[subject_id][clust_list[2]] = [roi_path + clust_list[2] + '/' + d.rstrip('\n')]
-                data[subject_id][clust_list[3]] = [roi_path + clust_list[3] + '/' + d.rstrip('\n')]
-                data[subject_id]['HR_filt_ds'] = [hr_path + hr_fold[i].rstrip('\n')]
-                data[subject_id]['RV_filt_ds'] = [rv_path + rv_fold[i].rstrip('\n')]
-            else:
-                data[subject_id][clust_list[0]].append(roi_path + clust_list[0] + '/' + d.rstrip('\n'))
-                data[subject_id][clust_list[1]].append(roi_path + clust_list[1] + '/' + d.rstrip('\n'))
-                data[subject_id][clust_list[2]].append(roi_path + clust_list[2] + '/' + d.rstrip('\n'))
-                data[subject_id][clust_list[3]].append(roi_path + clust_list[3] + '/' + d.rstrip('\n'))
-                data[subject_id]['HR_filt_ds'].append(hr_path + hr_fold[i].rstrip('\n'))
-                data[subject_id]['RV_filt_ds'].append(rv_path + rv_fold[i].rstrip('\n'))
+    data = {}
+
+    for task in list_of_tasks:
+        task_file = path_to_good_lists + '/' + task + '.txt'
+
+        roi_path = '/bigdata/HCP_task/' + task + '/bpf-ds'
+        rv_path = '/bigdata/HCP_task/' + task + '/RV_filt_ds'
+        hr_path = '/bigdata/HCP_task/' + task + '/HR_filt_ds'
+
+        with open(task_file) as f:
+            lines = f.readlines()
+            for line in lines:
+                parts = line.split('_')
+                subject_id = parts[0]
+                if subject_id not in data:
+                    data[subject_id] = {parts[2]: {}}
+                    data[subject_id][parts[2]] = {
+                        clust_list[0]: [roi_path + '/' + clust_list[0] + '/rois_' + line.strip('\n') + '.mat'],
+                        clust_list[1]: [roi_path + '/' + clust_list[1] + '/rois_' + line.strip('\n') + '.mat'],
+                        clust_list[2]: [roi_path + '/' + clust_list[2] + '/rois_' + line.strip('\n') + '.mat'],
+                        clust_list[3]: [roi_path + '/' + clust_list[3] + '/rois_' + line.strip('\n') + '.mat'],
+                        'HR_filt_ds': [hr_path + '/HR_filtds_' + line.strip('\n') + '.mat'],
+                        'RV_filt_ds': [rv_path + '/RV_filtds_' + line.strip('\n') + '.mat']}
+                else:
+                    if parts[2] not in data[subject_id]:
+                        data[subject_id][parts[2]] = {
+                            clust_list[0]: [roi_path + '/' + clust_list[0] + '/rois_' + line.strip('\n') + '.mat'],
+                            clust_list[1]: [roi_path + '/' + clust_list[1] + '/rois_' + line.strip('\n') + '.mat'],
+                            clust_list[2]: [roi_path + '/' + clust_list[2] + '/rois_' + line.strip('\n') + '.mat'],
+                            clust_list[3]: [roi_path + '/' + clust_list[3] + '/rois_' + line.strip('\n') + '.mat'],
+                            'HR_filt_ds': [hr_path + '/HR_filtds_' + line.strip('\n') + '.mat'],
+                            'RV_filt_ds': [rv_path + '/RV_filtds_' + line.strip('\n') + '.mat']}
+                    else:
+                        data[subject_id][parts[2]][clust_list[0]].append(
+                            roi_path + '/' + clust_list[0] + '/rois_' + line.strip('\n') + '.mat')
+                        data[subject_id][parts[2]][clust_list[1]].append(
+                            roi_path + '/' + clust_list[1] + '/rois_' + line.strip('\n') + '.mat')
+                        data[subject_id][parts[2]][clust_list[2]].append(
+                            roi_path + '/' + clust_list[2] + '/rois_' + line.strip('\n') + '.mat')
+                        data[subject_id][parts[2]][clust_list[3]].append(
+                            roi_path + '/' + clust_list[3] + '/rois_' + line.strip('\n') + '.mat')
+                        data[subject_id][parts[2]]['HR_filt_ds'].append(
+                            hr_path + '/HR_filtds_' + line.strip('\n') + '.mat')
+                        data[subject_id][parts[2]]['RV_filt_ds'].append(
+                            rv_path + '/RV_filtds_' + line.strip('\n') + '.mat')
 
     # get the paths
     subj_excl = []
@@ -156,18 +176,18 @@ class data_to_tensor():
         single_paths = self.paths[self.idx_list[idx][0]]
         hr_path = single_paths['HR_filt_ds'][self.idx_list[idx][1]]
         # print(hr_path)
-        schaefer = single[self.roi_list[0]][self.idx_list[idx][1]]['roi_dat'][0:600, :]
-        tractseg = single[self.roi_list[1]][self.idx_list[idx][1]]['roi_dat'][0:600, :]
+        schaefer = single[self.roi_list[0]][self.idx_list[idx][1]]['roi_dat']
+        tractseg = single[self.roi_list[1]][self.idx_list[idx][1]]['roi_dat']
 
-        # mask some specific ROIs to test their effect
-        mask = np.ones(tractseg.shape[1]) > 0
-        mask[[15, 16, 17, 18, 21, 22, 27, 32, 33, 34, 35]] = 0
-        tractseg = tractseg[:, mask]
+        # # mask some specific ROIs to test their effect
+        # mask = np.ones(tractseg.shape[1]) > 0
+        # mask[[15, 16, 17, 18, 21, 22, 27, 32, 33, 34, 35]] = 0
+        # tractseg = tractseg[:, mask]
 
-        tian = single[self.roi_list[2]][self.idx_list[idx][1]]['roi_dat'][0:600, :]
-        # aan = single[self.roi_list[3]][self.idx_list[idx][1]]['roi_dat'][0:600, :]
-        hr = single['HR_filt_ds'][self.idx_list[idx][1]]['hr_filt_ds'][0:600, :]  # trimmed
-        rv = single['RV_filt_ds'][self.idx_list[idx][1]]['rv_filt_ds'][0:600, :]  # trimmed
+        tian = single[self.roi_list[2]][self.idx_list[idx][1]]['roi_dat']
+        aan = single[self.roi_list[3]][self.idx_list[idx][1]]['roi_dat']
+        hr = single['HR_filt_ds'][self.idx_list[idx][1]]['hr_filt_ds']
+        rv = single['RV_filt_ds'][self.idx_list[idx][1]]['rv_filt_ds']
 
         # # TO DO multi-head
 
@@ -176,9 +196,9 @@ class data_to_tensor():
         schaefer_norm = (schaefer - schaefer.mean(axis=0)) / schaefer.std(axis=0)  # z-score normalization
         tractseg_norm = (tractseg - tractseg.mean(axis=0)) / tractseg.std(axis=0)  # z-score normalization
         tian_norm = (tian - tian.mean(axis=0)) / tian.std(axis=0)  # z-score normalization
-        # aan_norm = (aan - aan.mean(axis=0)) / aan.std(axis=0)  # z-score normalization
-        # roi_norm = np.hstack((schaefer_norm, tractseg_norm, tian_norm, aan_norm))
-        roi_norm = np.hstack((schaefer_norm, tractseg_norm, tian_norm))
+        aan_norm = (aan - aan.mean(axis=0)) / aan.std(axis=0)  # z-score normalization
+        roi_norm = np.hstack((schaefer_norm, tractseg_norm, tian_norm, aan_norm))
+        # roi_norm = np.hstack((schaefer_norm, tractseg_norm, tian_norm))
 
         # plt.subplot(211)
         # plt.plot(rv, 'g')

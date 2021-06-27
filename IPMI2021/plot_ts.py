@@ -5,7 +5,7 @@ import warnings
 import seaborn as sn
 import pandas as pd
 from scipy.io import loadmat
-out_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/out/results/Bi-LSTM_schaefertractsegtianaan_lr_0.001_l1_0.5/test/no_wm/'
+out_dir = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/out/select/Bi-LSTM_schaefertractsegtianaan_lr_0.001_l1_0.5/test/test_fold_0/'
 files = ['rv_pred.csv', 'rv_target.csv', 'hr_pred.csv', 'hr_target.csv']
 # id_corr = loadmat('/home/bayrakrg/neurdy/pycharm/neuroimg2020/RV/out/results/cnn_findlab90/id_corr.mat')
 id_corr = 'pred_scans'
@@ -27,10 +27,14 @@ for file in files:
 
 fig, axs = plt.subplots(2, 1, figsize=(20,8))
 
-# axs[0].plot(all_data[0][0], label='r = -0.0326')
-# axs[0].plot(all_data[7][0], linestyle='--')
-# axs[1].plot(all_data[1][0], label='r = 0.4635')
-# axs[1].plot(all_data[8][0], linestyle='--')
+# select scan to plot
+a = loadmat('/bigdata/HCP_rest/power+xifra/resting_min+prepro/bpf-ds/physio/HR_filt_ds/194645_rfMRI_REST1_RL_hr_filt_ds.mat')
+mu = np.mean(a['hr_filt_ds'])
+
+axs[0].plot(all_data[35][0], label='r = 0.807')
+axs[0].plot(all_data[335][0], linestyle='--')
+axs[1].plot(list(np.array(all_data[635][0]) + mu), label='r = 0.748')
+axs[1].plot(list(np.array(all_data[935][0]) + mu), linestyle='--')
 # axs[2].plot(all_data[2][0], label='r = -0.2310')
 # axs[2].plot(all_data[9][0], linestyle='--')
 # axs[3].plot(all_data[3][0], label='r = 0.4325')
@@ -50,7 +54,7 @@ axs[0].tick_params(
 axs[0].grid(color='gray', linestyle=':', linewidth=.8)
 axs[0].legend(loc='upper left', bbox_to_anchor=(0.0, 1.00), ncol=2)
 
-for i in range(6):
+for i in range(2):
     axs[i].tick_params(
         axis='x',          # changes apply to the x-axis
         which='both',      # both major and minor ticks are affected
@@ -59,11 +63,11 @@ for i in range(6):
         labelbottom=False) # labels along the bottom edge are off
     axs[i].grid(color='gray', linestyle=':', linewidth=.8)
     axs[i].legend(loc='upper left', bbox_to_anchor=(0.00, 1.00), ncol=2)
-
-axs[6].plot(all_data[6][0], label='r = -0.04318')
-axs[6].plot(all_data[13][0], linestyle='--')
-axs[6].legend(loc='lower left', bbox_to_anchor=(0.00, 0.00), ncol=2)
-axs[6].grid(color='gray', linestyle=':', linewidth=.8)
+#
+# axs[2].plot(all_data[6][0], label='r = -0.04318')
+# axs[6].plot(all_data[13][0], linestyle='--')
+# axs[2].legend(loc='lower left', bbox_to_anchor=(0.00, 0.00), ncol=2)
+# axs[2].grid(color='gray', linestyle=':', linewidth=.8)
 
 plt.show()
 pass
