@@ -89,7 +89,7 @@ for ax in [ax1, ax2]:
 #     pc.set_edgecolor('#5DBB63')
 #     pc.set_alpha(1)
 
-plt.show()
+# plt.show()
 
 vecrv = np.reshape(allrv_data, [-1])
 vechr = np.reshape(allhr_data, [-1])

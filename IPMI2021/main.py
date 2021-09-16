@@ -2,8 +2,8 @@ import torch
 import torchvision.transforms as transforms
 import argparse
 from torch.utils.data import DataLoader
-# from data_loader import *
 from data_loader_ds import *
+# from data_loader_ds import *
 from trainer import *
 from model import *
 from tqdm import tqdm
@@ -31,8 +31,8 @@ def train_model(opt):
     keys = list(train_data.keys())
 
     # calculate number of rois which becomes the channel
-    # chs = get_roi_len(opt.roi_list)
-    chs = 477
+    chs = get_roi_len(opt.roi_list)
+    # chs = 477
 
     # assign random validation remove them from train data
     # num sub is number of subjects with missing physio
@@ -157,8 +157,8 @@ def test_model(opt):
     # create fold specific dictionaries
     test_data = get_dictionary(opt)
     # get number of  total channels
-    # chs = get_roi_len(opt.roi_list)
-    chs = 477
+    chs = get_roi_len(opt.roi_list)
+    # chs = 477
 
     # device CPU or GPU
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -188,6 +188,7 @@ def test_model(opt):
     model = model.to(device)
 
     avg_loss, target_rvs, target_hrs, pred_rvs, pred_hrs = test(model, device, test_loader, opt)
+    # avg_loss, target_rvs, target_hrs, pred_rvs, pred_hrs, ids, tasks = test(model, device, test_loader, opt)
     # avg_loss, target_rvs, target_hrs, pred_rvs, pred_hrs, t_att, s_att = test(model, device, test_loader, opt)
     #
     # look at temporal and spatial attention maps
@@ -212,26 +213,26 @@ def test_model(opt):
     # # plot prediction vs output
     # plt.figure(figsize=(15.5, 5))
     #
-    # n = 100
+    # n = 5
     # m = 137
-    # target = target_hrs[n][:m]
-    # hr = pred_hrs[n][:m]
+    # target = target_hrs[n][:]#m]
+    # hr = pred_hrs[n][:]#m]
     # thr = (target - target.mean(axis=0)) / target.std(axis=0)  # z-score normalization
     # phr = (hr - hr.mean(axis=0)) / hr.std(axis=0)  # z-score normalization
     #
-    # target = target_rvs[n][:m]
-    # hr = pred_rvs[n][:m]
+    # target = target_rvs[n][:]#m]
+    # rv = pred_rvs[n][:]#m]
     # trv = (target - target.mean(axis=0)) / target.std(axis=0)  # z-score normalization
-    # prv = (hr - hr.mean(axis=0)) / hr.std(axis=0)  # z-score normalization
+    # prv = (rv - rv.mean(axis=0)) / rv.std(axis=0)  # z-score normalization
     #
     # plt.subplot(211)
-    # plt.plot(np.arange(0, m), phr)
-    # plt.plot(np.arange(0, m), thr)
+    # plt.plot(np.arange(0, len(phr)), phr)
+    # plt.plot(np.arange(0, len(phr)), thr)
     # plt.ylabel('hr')
     # plt.legend(['Prediction', 'Target'])
     # plt.subplot(212)
-    # plt.plot(np.arange(0, m), prv)
-    # plt.plot(np.arange(0, m), trv)
+    # plt.plot(np.arange(0, len(phr)), prv)
+    # plt.plot(np.arange(0, len(phr)), trv)
     # plt.ylabel('rv')
     # plt.legend(['Prediction', 'Target'])
     # plt.show()
@@ -240,6 +241,7 @@ def test_model(opt):
     prediction_file = '{}results/{}/test/{}/pred_scans.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
     # fold_file = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/task_files/' + opt.test_fold
     fold_file = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/k_fold_files/' + opt.test_fold
+    # fold_file = '/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/nih_files/' + opt.test_fold
 
     rvp = '{}/results/{}/test/{}/rv_pred.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
     rvt = '{}/results/{}/test/{}/rv_target.csv'.format(opt.out_dir, opt.uni_id, opt.test_fold.rstrip('.txt'))
@@ -250,18 +252,21 @@ def test_model(opt):
 
     with open(prediction_file, "w") as f1, open(fold_file, "r") as f2, open('nan_files.txt', "w") as f3:
         for n, line in enumerate(f2):
-            id = line.split('_')[1]
-            file = line.rstrip('.mat\n')
-            print(n, ' ', file)
+            # id = ids[n][0]
+            # for multiple task data
+            # sets = [item for elem in tasks[n] for item in elem]
+            # sets = 'TR_test'
+
             if np.isnan(pred_rvs[n]).all():
-                f3.write(file)
+                # f3.write(sets)
                 f3.write('\n')
             else:
                 rv_corr_coeff = sp.stats.pearsonr(pred_rvs[n][:].squeeze(), target_rvs[n][:].squeeze())
                 hr_corr_coeff = sp.stats.pearsonr(pred_hrs[n][:].squeeze(), target_hrs[n][:].squeeze())
 
                 # writing to buffer
-                f1.write('{}, {}, {}, {}'.format(id, file, str(rv_corr_coeff[0]), str(hr_corr_coeff[0])))
+                # f1.write('{}, {}, {}, {}'.format(id, sets, str(rv_corr_coeff[0]), str(hr_corr_coeff[0])))
+                f1.write('{}, {}'.format(str(rv_corr_coeff[0]), str(hr_corr_coeff[0])))
                 f1.write('\n')
 
                 # writing to disk
@@ -291,7 +296,7 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--model', type=str, default='Bi-LSTM')
-    parser.add_argument('--uni_id', type=str, default='Bi-LSTM_schaefertractsegtian_lr_0.001_l1_0.5')
+    parser.add_argument('--uni_id', type=str, default='Bi-LSTM-DTW_schaefertractsegtianaan_lr_0.001_l1_0.5_g_1.0')
     parser.add_argument('--epoch', type=int, default=999, help='number of epochs to train for, default=10')
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate, default=0.0001')
     parser.add_argument('--l1', type=float, default=0.5, help='loss weighting for , default=0.0001')
@@ -300,7 +305,7 @@ def main():
     parser.add_argument('--train_fold', default='train_fold_0.txt', help='train_fold_k')
     parser.add_argument('--val_split', type=float, default=0.15, help='percentage of the split')
 
-    parser.add_argument('--out_dir', type=str, default='/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/out/', help='Path to output directory')
+    parser.add_argument('--out_dir', type=str, default='/home/bayrakrg/neurdy/pycharm/multi-task-physio/IPMI2021/out_TEST/', help='Path to output directory')
     parser.add_argument('--roi_list', type=str, default=['schaefer', 'tractseg', 'tian', 'aan'], help='list of rois wanted to be included')
     parser.add_argument('--mode', type=str, default='test', help='Determines whether to backpropagate or not')
     parser.add_argument('--train_batch', type=int, default=16, help='Decides size of each training batch')
