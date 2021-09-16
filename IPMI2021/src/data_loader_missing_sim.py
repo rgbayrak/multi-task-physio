@@ -11,6 +11,7 @@ from scipy.io import loadmat
 import pickle
 from skimage import io, transform
 
+# data loader for simulating missing data
 
 def get_roi_len(dirs):
     roi_path = "/bigdata/HCP_1200/power+xifra/resting_min+prepro/bpf-ds/"
